@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRF Synthesizer Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .screen { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hidden { display: none; }
+        .file-drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .file-drop-zone.dragover {
+            background-color: #e2e8f0;
+            border-color: #4299e1;
+        }
+        .file-drop-zone.uploaded {
+            border-color: #48bb78;
+            background-color: #f0fff4;
+        }
+        .node {
+            background-color: white;
+            border: 2px solid;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            position: absolute;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .present-filter {
+            width: 220px;
+            height: 220px;
+            border-radius: 1.5rem;
+            flex-direction: column;
+            padding: 1rem;
+        }
+        #svg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+        }
+        .user-bubble {
+            background-color: #3b82f6;
+            color: white;
+            align-self: flex-end;
+        }
+        .ai-bubble {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            align-self: flex-start;
+        }
+        /* AI Mode Toggle Styles */
+        .ai-mode-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .ai-mode-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 font-sans">
+
+    <div id="app-container" class="bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-5xl text-center relative">
+
+        <!-- API Key Modal -->
+        <div id="api-key-modal" class="absolute top-4 right-4">
+            <button id="settings-btn" class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <div id="api-key-form" class="hidden absolute right-0 mt-2 w-72 bg-white border rounded-lg shadow-xl p-4 z-20 text-left">
+                <label for="api-key-input" class="block text-sm font-medium text-gray-700">Paste your Gemini API Key here:</label>
+                <input type="password" id="api-key-input" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <button id="save-key-btn" class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Save Key</button>
+                <p class="text-xs text-gray-500 mt-2">Your key is saved only in this browser. <a href="#" id="how-to-get-key-link" class="text-blue-500 hover:underline">How do I get a key?</a></p>
+            </div>
+        </div>
+
+        <!-- Upload Screen -->
+        <div id="upload-screen" class="screen">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">PRF Synthesizer</h1>
+            <p class="text-gray-600 mb-8">Upload your six component files, or load a demo case to see how it works.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- File Upload Zones -->
+                <div id="drop-zone-assembly" class="file-drop-zone" data-component="Assembly History"><span>📜<br>Assembly History</span><input type="file" class="hidden"></div>
+                <div id="drop-zone-beliefs" class="file-drop-zone" data-component="Beliefs"><span>🧠<br>Beliefs</span><input type="file" class="hidden"></div>
+                <div id="drop-zone-rules" class="file-drop-zone" data-component="Rules"><span>⚖️<br>Rules</span><input type="file" class="hidden"></div>
+                <div id="drop-zone-ontology" class="file-drop-zone" data-component="Ontology"><span> worldview<br>Ontology</span><input type="file" class="hidden"></div>
+                <div id="drop-zone-authenticity" class="file-drop-zone" data-component="Authenticity"><span>💖<br>Authenticity</span><input type="file" class="hidden"></div>
+                <div id="drop-zone-future" class="file-drop-zone" data-component="Future Pull"><span>🌟<br>Future Pull</span><input type="file" class="hidden"></div>
+            </div>
+            <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button id="synthesize-btn" class="bg-blue-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Synthesize My PRF</button>
+                <button id="demo-btn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">Load Demo Case (Mandela)</button>
+            </div>
+        </div>
+        
+        <!-- Demo Review Screen -->
+        <div id="demo-review-screen" class="screen hidden text-left">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">Demo Case: Nelson Mandela</h1>
+             <p class="text-gray-600 mb-8 text-center">Challenge: Choosing reconciliation over retribution after apartheid.</p>
+            <div id="demo-content-container" class="space-y-4 max-h-96 overflow-y-auto pr-4">
+                <!-- Demo content will be injected here -->
+            </div>
+            <div class="mt-8 flex justify-center gap-4">
+                 <button id="back-to-upload-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg shadow-md">Back</button>
+                <button id="synthesize-demo-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md">Synthesize This Demo PRF</button>
+            </div>
+        </div>
+
+
+        <!-- TCF Dashboard Screen -->
+        <div id="dashboard-screen" class="screen hidden">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">TCF Snapshot</h1>
+            <p id="challenge-title" class="text-gray-600 mb-4 font-semibold"></p>
+            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md my-6 text-left">
+                <p>"This is a spotlight on one part of your larger ethical web. This analysis helps you strengthen your web one strand at a time."</p>
+            </div>
+            
+            <!-- Visualization -->
+            <div id="visualization-container" class="relative h-96 my-8">
+                <svg id="svg-container"></svg>
+                <div class="absolute top-1/4 left-1/4 w-32 h-32 border-2 border-gray-200 rounded-full opacity-30"></div>
+                <div class="absolute top-1/2 right-1/4 w-24 h-24 border-2 border-gray-200 rounded-lg opacity-30"></div>
+                
+                <div id="node-assembly" class="node border-gray-400" style="top: 50%; left: 5%; transform: translateY(-50%);">📜<br>Assembly<br>History</div>
+                <div id="node-present" class="node present-filter border-blue-500" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    <span class="text-lg">Present Filter</span>
+                    <div class="text-sm font-normal mt-2">🧠 Beliefs<br>⚖️ Rules<br> worldview Ontology<br>💖 Authenticity</div>
+                </div>
+                <div id="node-future" class="node border-purple-500" style="top: 50%; right: 5%; transform: translateY(-50%);">🌟<br>Future<br>Pull</div>
+            </div>
+
+            <div class="text-center mb-8">
+                <span class="text-2xl font-bold text-gray-700">TCF Score:</span>
+                <span id="tcf-score" class="text-3xl font-bold text-blue-600">78/100</span>
+            </div>
+            
+            <!-- TCF Explanation Section -->
+            <div id="tcf-explanation" class="text-left bg-gray-50 p-6 rounded-lg space-y-2 mb-8">
+                <!-- Descriptive explanation will be injected here -->
+            </div>
+
+            <!-- AI Insight Section -->
+            <div class="text-left border-t pt-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">AI-Powered Insights</h2>
+                <div id="ai-insights" class="bg-gray-50 p-6 rounded-lg space-y-4">
+                    <p class="text-center text-gray-500">Click the button to reveal insights about your PRF.</p>
+                </div>
+                <div class="text-center mt-6">
+                    <button id="back-to-upload-btn-2" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md">Back to Upload</button>
+                    <button id="insight-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">Reveal Key Insights</button>
+                     <button id="conclusion-btn" class="ml-4 bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">Finish & Conclude</button>
+                </div>
+                
+                <!-- AI Chat Section -->
+                <div id="ai-chat-section" class="hidden mt-8">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Chat About This Analysis</h2>
+                     
+                     <!-- AI Mode Toggle -->
+                     <div class="flex justify-center gap-2 mb-4">
+                         <button id="mode-socratic" class="ai-mode-btn active">Socratic Guide</button>
+                         <button id="mode-sparring" class="ai-mode-btn">Sparring Partner</button>
+                     </div>
+                     <p id="mode-explanation" class="text-sm text-gray-500 mb-4"><b>Socratic Guide:</b> The AI will only use the text you provided to help you find connections.</p>
+                     
+                     <div id="chat-window" class="h-64 border rounded-lg p-4 overflow-y-auto flex flex-col gap-4 bg-gray-50">
+                         <!-- Chat messages will appear here -->
+                     </div>
+                     <div class="mt-4 flex gap-2">
+                         <input type="text" id="chat-input" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="Ask a follow-up question...">
+                         <button id="chat-send-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg">Send</button>
+                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Conclusion Screen -->
+        <div id="conclusion-screen" class="screen hidden text-left">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">From Spotlight to Constellation</h1>
+            <h2 class="text-xl text-gray-600 mb-6 text-center">Understanding Your ATCF</h2>
+            <p class="text-gray-700 mb-4">You have now completed a deep analysis of a single moral challenge, creating a **TCF Snapshot**. Think of this as studying one intricate knot in the vast web of your ethical self.</p>
+            <p class="text-gray-700 mb-4">Your **Adaptive Temporal Coherence Function (ATCF)** is not a single score. It is the **pattern** that emerges when you look at several of these TCF snapshots together. By analyzing different challenges from different areas of your life, you begin to see a constellation of your strengths and tensions.</p>
+            <div class="bg-gray-50 p-4 rounded-lg my-4">
+                <p class="text-gray-700">A **high ATCF** suggests you are a skillful "weaver"—you can maintain your core integrity across many different contexts. A **lower ATCF** might show that you are highly coherent at work but feel conflicted in your relationships. This isn't a failure; it's a roadmap for growth.</p>
+            </div>
+            <p class="text-gray-700 mb-6">The ultimate goal of this work is to increase your ATCF over time. This is the path of **practical wisdom**: becoming more aware of your internal operating system so you can consciously repair, strengthen, and grow your ethical web, leading to a more integrated and authentic life.</p>
+            <div class="text-center mt-8">
+                <button id="start-over-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">Analyze Another Challenge</button>
+            </div>
+        </div>
+        
+        <!-- Custom Alert Modal -->
+        <div id="custom-alert-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+            <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">API Key Required</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500">
+                            To use the AI features, please click the settings icon (⚙️) in the top-right corner to save your Gemini API key.
+                        </p>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="mt-4 inline-block text-blue-500 hover:underline">Get Your Free Gemini API Key Here</a>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="close-alert-btn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- How-to Modal -->
+        <div id="how-to-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+            <div class="relative mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white text-left">
+                 <h3 class="text-lg leading-6 font-medium text-gray-900 text-center mb-4">How to Get Your API Key</h3>
+                 <div class="space-y-4 text-sm text-gray-600">
+                    <p><b>Step 1:</b> Click the link below to go to Google AI Studio. You may need to sign in with your Google account.</p>
+                    <p class="text-center"><a href="https://aistudio.google.com/app/apikey" target="_blank" class="font-bold text-blue-500 hover:underline">Go to Google AI Studio</a></p>
+                    <p><b>Step 2:</b> Click the "<b>Create API key in new project</b>" button. A new key will be generated for you.</p>
+                    <p><b>Step 3:</b> Copy the generated key. It's a long string of letters and numbers. Come back to this page, click the settings icon (⚙️), and paste the key into the input field.</p>
+                 </div>
+                 <div class="text-center mt-6">
+                     <button id="close-how-to-btn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-600">Got It</button>
+                 </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const screens = {
+                upload: document.getElementById('upload-screen'),
+                demoReview: document.getElementById('demo-review-screen'),
+                dashboard: document.getElementById('dashboard-screen'),
+                conclusion: document.getElementById('conclusion-screen'),
+            };
+            const synthesizeBtn = document.getElementById('synthesize-btn');
+            const demoBtn = document.getElementById('demo-btn');
+            const synthesizeDemoBtn = document.getElementById('synthesize-demo-btn');
+            const backToUploadBtn = document.getElementById('back-to-upload-btn');
+            const backToUploadBtn2 = document.getElementById('back-to-upload-btn-2');
+            const insightBtn = document.getElementById('insight-btn');
+            const conclusionBtn = document.getElementById('conclusion-btn');
+            const startOverBtn = document.getElementById('start-over-btn');
+            const dropZones = document.querySelectorAll('.file-drop-zone');
+            const challengeTitle = document.getElementById('challenge-title');
+            const aiInsightsContainer = document.getElementById('ai-insights');
+            const tcfScoreDisplay = document.getElementById('tcf-score');
+            const tcfExplanationContainer = document.getElementById('tcf-explanation');
+            const settingsBtn = document.getElementById('settings-btn');
+            const apiKeyForm = document.getElementById('api-key-form');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const saveKeyBtn = document.getElementById('save-key-btn');
+            const demoContentContainer = document.getElementById('demo-content-container');
+            const aiChatSection = document.getElementById('ai-chat-section');
+            const chatWindow = document.getElementById('chat-window');
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const modeSocraticBtn = document.getElementById('mode-socratic');
+            const modeSparringBtn = document.getElementById('mode-sparring');
+            const modeExplanation = document.getElementById('mode-explanation');
+            const customAlertModal = document.getElementById('custom-alert-modal');
+            const closeAlertBtn = document.getElementById('close-alert-btn');
+            const howToModal = document.getElementById('how-to-modal');
+            const howToGetKeLink = document.getElementById('how-to-get-key-link');
+            const closeHowToBtn = document.getElementById('close-how-to-btn');
+
+
+            let uploadedFiles = {};
+            let chatHistory = [];
+            let currentAiMode = 'socratic';
+            const API_KEY_STORAGE = 'prfSynthesizerApiKey';
+
+            // --- Modal Logic ---
+            function showCustomAlert() { customAlertModal.classList.remove('hidden'); }
+            closeAlertBtn.addEventListener('click', () => customAlertModal.classList.add('hidden'));
+            howToGetKeLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                howToModal.classList.remove('hidden');
+            });
+            closeHowToBtn.addEventListener('click', () => howToModal.classList.add('hidden'));
+
+            // --- API Key Logic ---
+            settingsBtn.addEventListener('click', () => apiKeyForm.classList.toggle('hidden'));
+            saveKeyBtn.addEventListener('click', () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    localStorage.setItem(API_KEY_STORAGE, key);
+                    apiKeyForm.classList.add('hidden');
+                    alert('API Key saved successfully!');
+                } else {
+                    alert('Please enter a valid API key.');
+                }
+            });
+            
+            // --- Demo Data ---
+            const demoData = {
+                "Assembly History": `--- Assembly History File ---\nChallenge: Choosing reconciliation over retribution after apartheid.\n\nQ: What are 3-5 of the most significant life events that have shaped how you approach this challenge?\nA: 27 years of imprisonment on Robben Island, witnessing the violence of the apartheid state, and studying the history of the ANC's struggle.`,
+                "Beliefs": `--- Beliefs File ---\nChallenge: Choosing reconciliation over retribution after apartheid.\n\nQ: What is your most central belief about how this situation works?\nA: I believe that retribution will only lead to a cycle of violence. A shared future requires forgiveness and mutual understanding.`,
+                "Rules": `--- Rules File ---\nChallenge: Choosing reconciliation over retribution after apartheid.\n\nQ: What is the most important rule that guides your actions in this situation today?\nA: My rule is to prioritize national unity above my personal feelings or the desire for revenge. I must lead by example.`,
+                "Ontology": `--- Ontology File ---\nChallenge: Choosing reconciliation over retribution after apartheid.\n\nQ: In this situation, what is the single most important thing that gives it meaning?\nA: The fundamental concept of "Ubuntu" - that my humanity is inextricably bound up in the humanity of others, including my former oppressors.`,
+                "Authenticity": `--- Authenticity File ---\nChallenge: Choosing reconciliation over retribution after apartheid.\n\nQ: What are your non-negotiable core values in this situation?\nA: Magnanimity, self-discipline, and strategic patience. To act out of bitterness would be a betrayal of the person I became in prison.`,
+                "Future Pull": `--- Future Pull File ---\nChallenge: Choosing reconciliation over retribution after apartheid.\n\nQ: Describe the best possible future for you in this situation.\nA: The vision of a peaceful, democratic, non-racial "Rainbow Nation" where all South Africans can live together in prosperity. This vision pulls me forward.`
+            };
+            
+            const demoInsights = {
+                "What is the strongest coherence here?": "The strongest coherence is the powerful alignment between his **Assembly History** and **Authenticity**. The 27 years in prison didn't make him bitter; it forged a core value of 'magnanimity.' This allowed him to authentically pursue a **Future Pull** of a 'Rainbow Nation' without being hypocritical. His past directly created the authentic values needed for his future vision.",
+                "What is the biggest potential tension?": "The biggest potential tension lies between the **Assembly History** of leading an armed struggle and the **Rule** of prioritizing national unity through forgiveness. Many people would expect a history of violent opposition to lead to a rule of retribution. Mandela's ability to adopt a rule that transcends his own history is a mark of incredible 'weaver's mastery.'",
+                "How does 'Ubuntu' connect everything?": "The **Ontological** commitment to 'Ubuntu' acts as the central hub connecting everything. It explains *why* he could adopt a **Rule** of reconciliation, as he believed his own humanity was tied to that of his oppressors. It justifies his **Belief** that a shared future is possible and gives profound meaning to his **Future Pull** vision. It's the philosophical glue holding the entire framework together."
+            };
+
+            // --- File Upload Logic ---
+            dropZones.forEach(zone => {
+                const input = zone.querySelector('input');
+                zone.addEventListener('click', () => input.click());
+                zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+                zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('dragover');
+                    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], zone);
+                });
+                input.addEventListener('change', (e) => {
+                    if (e.target.files.length) handleFile(e.target.files[0], zone);
+                });
+            });
+
+            function handleFile(file, zone) {
+                const component = zone.dataset.component;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles[component] = e.target.result;
+                    zone.classList.add('uploaded');
+                    zone.querySelector('span').innerHTML = `✅<br>${component}<br><small class="font-normal">${file.name}</small>`;
+                    checkAllFilesUploaded();
+                };
+                reader.readAsText(file);
+            }
+
+            function checkAllFilesUploaded() {
+                if (Object.keys(uploadedFiles).length === 6) {
+                    synthesizeBtn.disabled = false;
+                }
+            }
+
+            // --- Screen Transition and Demo Logic ---
+            synthesizeBtn.addEventListener('click', () => {
+                showScreen('dashboard');
+                processAndVisualize(uploadedFiles);
+            });
+
+            demoBtn.addEventListener('click', () => showDemoReview());
+
+            synthesizeDemoBtn.addEventListener('click', () => {
+                uploadedFiles = demoData;
+                showScreen('dashboard');
+                processAndVisualize(demoData, true);
+            });
+
+            backToUploadBtn.addEventListener('click', () => showScreen('upload'));
+            backToUploadBtn2.addEventListener('click', () => showScreen('upload'));
+            
+            conclusionBtn.addEventListener('click', () => showScreen('conclusion'));
+            
+            startOverBtn.addEventListener('click', () => {
+                uploadedFiles = {};
+                chatHistory = [];
+                dropZones.forEach(zone => {
+                    zone.classList.remove('uploaded');
+                    zone.querySelector('span').innerHTML = `${getIcon(zone.dataset.component)}<br>${zone.dataset.component}`;
+                });
+                synthesizeBtn.disabled = true;
+                aiInsightsContainer.innerHTML = `<p class="text-center text-gray-500">Click the button to reveal insights about your PRF.</p>`;
+                aiChatSection.classList.add('hidden');
+                chatWindow.innerHTML = '';
+                showScreen('upload');
+            });
+
+            function showScreen(screenName) {
+                Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+                screens[screenName].classList.remove('hidden');
+            }
+
+            function showDemoReview() {
+                demoContentContainer.innerHTML = '';
+                const order = ["Assembly History", "Beliefs", "Rules", "Ontology", "Authenticity", "Future Pull"];
+                order.forEach(component => {
+                    const content = demoData[component];
+                    const details = document.createElement('details');
+                    details.className = 'bg-gray-50 p-4 rounded-lg';
+                    const summary = document.createElement('summary');
+                    summary.className = 'font-bold cursor-pointer';
+                    summary.textContent = `${getIcon(component)} ${component}`;
+                    const pre = document.createElement('pre');
+                    pre.className = 'mt-2 text-sm whitespace-pre-wrap font-sans text-gray-700';
+                    pre.textContent = content.replace(/---.*?---\nChallenge:.*?\n\n/, ''); // Clean up header
+                    details.appendChild(summary);
+                    details.appendChild(pre);
+                    demoContentContainer.appendChild(details);
+                });
+                showScreen('demoReview');
+            }
+
+            function getIcon(component) {
+                const icons = { 'Assembly History': '📜', 'Beliefs': '🧠', 'Rules': '⚖️', 'Ontology': ' worldview', 'Authenticity': '💖', 'Future Pull': '🌟' };
+                return icons[component];
+            }
+
+            function processAndVisualize(files, isDemo = false) {
+                const firstFileContent = files['Assembly History'] || files['Beliefs'] || '';
+                const match = firstFileContent.match(/Challenge: (.*)/);
+                const challenge = match ? match[1] : "Your Moral Challenge";
+                challengeTitle.textContent = `Challenge: "${challenge}"`;
+                const score = isDemo ? 92 : Math.floor(Math.random() * (95 - 65 + 1) + 65);
+                tcfScoreDisplay.textContent = `${score}/100`;
+                drawCoherenceLines(score);
+                generateTcfExplanation(score);
+            }
+            
+            // --- TCF Descriptive Explanation ---
+            function generateTcfExplanation(score) {
+                let explanationHTML = '';
+                if (score > 85) {
+                    explanationHTML = `<h3 class="font-bold text-green-700">High Coherence (86-100)</h3><p>This high score suggests a strong alignment between your past experiences, present filters (BROA+), and future goals for this specific challenge. You likely feel a sense of clarity, flow, and integrity, even if the situation is difficult. Your beliefs, rules, and values are working together harmoniously. The key here is to identify this powerful alignment and consider how you can apply this coherent way of being to other, less integrated areas of your life.</p>`;
+                } else if (score > 70) {
+                     explanationHTML = `<h3 class="font-bold text-yellow-700">Moderate Coherence (71-85)</h3><p>This score indicates a generally solid framework with a few points of tension or inconsistency. You might feel you know the right path but find it difficult to follow, or feel a slight conflict between what you believe and what your gut tells you. These tensions are the primary areas for growth. Look for minor misalignments between your rules and your values, or between your past experiences and your future goals.</p>`;
+                } else {
+                     explanationHTML = `<h3 class="font-bold text-red-700">Low Coherence (Below 70)</h3><p>A score in this range points to significant contradictions within your PRF for this challenge. This often feels like being "stuck," conflicted, or inauthentic. It could mean a core belief is at odds with a core value, or a rule you inherited from your past no longer serves your future self. This is not a judgment, but a powerful opportunity. Identifying these deep conflicts is the first and most important step toward resolving them and building a more integrated self.</p>`;
+                }
+                tcfExplanationContainer.innerHTML = explanationHTML;
+            }
+            
+            // --- AI Mode Logic ---
+            modeSocraticBtn.addEventListener('click', () => setAiMode('socratic'));
+            modeSparringBtn.addEventListener('click', () => setAiMode('sparring'));
+
+            function setAiMode(mode) {
+                currentAiMode = mode;
+                modeSocraticBtn.classList.toggle('active', mode === 'socratic');
+                modeSparringBtn.classList.toggle('active', mode === 'sparring');
+                if (mode === 'socratic') {
+                    modeExplanation.innerHTML = `<b>Socratic Guide:</b> The AI will only use the text you provided to help you find connections.`;
+                } else {
+                    modeExplanation.innerHTML = `<b>Sparring Partner:</b> The AI can draw on its broader knowledge to provide context and new perspectives.`;
+                }
+            }
+
+
+            // --- Live AI Insight Logic ---
+            async function getAiInsights() {
+                const isDemo = uploadedFiles === demoData;
+                aiInsightsContainer.innerHTML = ''; // Clear previous content
+
+                if (isDemo) {
+                    // Show pre-set questions for the demo
+                    Object.keys(demoInsights).forEach(question => {
+                        const button = document.createElement('button');
+                        button.textContent = question;
+                        button.className = 'block w-full text-left bg-white p-3 rounded-lg hover:bg-gray-100 border';
+                        button.onclick = () => {
+                            const answer = demoInsights[question];
+                            const answerDiv = document.createElement('div');
+                            answerDiv.className = 'p-3 mt-2 bg-green-50 rounded-lg border border-green-200';
+                            answerDiv.innerHTML = answer;
+                            // Replace button with answer
+                            button.parentNode.replaceChild(answerDiv, button);
+                        };
+                        aiInsightsContainer.appendChild(button);
+                    });
+                    aiChatSection.classList.remove('hidden');
+                    addMessageToChat('ai', 'Hello! Feel free to ask me any follow-up questions about the Mandela analysis.');
+                } else {
+                    const apiKey = localStorage.getItem(API_KEY_STORAGE);
+                    if (!apiKey) {
+                        showCustomAlert();
+                        return;
+                    }
+                    // Call the API for user data
+                    const prompt = `Analyze the following Personal Reality Framework components for a student grappling with the challenge of "${(uploadedFiles['Beliefs'] || '').match(/Challenge: (.*)/)?.[1] || 'their challenge'}". The PRF consists of an Assembly History (past), a BROA+ filter (present), and a Future Pull (future).\n\n${JSON.stringify(uploadedFiles)}\n\nYour task is to act as a supportive philosophical guide. Do not give advice. Instead, identify the 3 most significant points of tension or coherence within this dynamic structure. Focus on how the past influences the present filter and how the filter aligns with the future. For each point, formulate a gentle, open-ended question. Present your output as an HTML bulleted list (<ul><li>...</li></ul>). Use <strong> for the "Tension Found" or "Coherence Found" part and <em> for the "Reflective Question" part.`;
+                    
+                    try {
+                        aiInsightsContainer.innerHTML = `<div class="text-center">Generating insights...</div>`;
+                        const response = await callGemini(prompt);
+                        aiInsightsContainer.innerHTML = response;
+                        aiChatSection.classList.remove('hidden');
+                        addMessageToChat('ai', 'I have analyzed your PRF. What would you like to discuss?');
+                    } catch (error) {
+                         aiInsightsContainer.innerHTML = `<p class="text-center text-red-500">An error occurred. Error: ${error.message}</p>`;
+                    }
+                }
+            }
+            
+            insightBtn.addEventListener('click', getAiInsights);
+
+            // --- AI Chat Logic ---
+            chatSendBtn.addEventListener('click', handleChatSend);
+            chatInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') handleChatSend();
+            });
+
+            async function handleChatSend() {
+                const apiKey = localStorage.getItem(API_KEY_STORAGE);
+                if (!apiKey) {
+                    showCustomAlert();
+                    return;
+                }
+
+                const userMessage = chatInput.value.trim();
+                if (!userMessage) return;
+
+                addMessageToChat('user', userMessage);
+                chatInput.value = '';
+                chatHistory.push({role: 'user', parts: [{text: userMessage}]});
+
+                const thinkingBubble = addMessageToChat('ai', 'Thinking...');
+
+                try {
+                    let chatPrompt;
+                    if (currentAiMode === 'socratic') {
+                        chatPrompt = `You are a Socratic Guide. Your ONLY source of information is the user's PRF data provided below. Do not use any outside knowledge. The user is asking a follow-up question about their PRF analysis. \n\nPRF DATA:\n${JSON.stringify(uploadedFiles)}\n\nCHAT HISTORY:\n${JSON.stringify(chatHistory)}\n\nNew question: "${userMessage}"\n\nBased ONLY on the PRF data, provide a concise, helpful, and reflective response.`;
+                    } else { // Sparring Partner mode
+                        chatPrompt = `You are a Philosophical Sparring Partner. You can use your broad knowledge of history, philosophy, and ethics. The user is asking a follow-up question about their PRF analysis. Ground your response in their PRF data, but feel free to introduce relevant external concepts or context to challenge and expand their thinking.\n\nPRF DATA:\n${JSON.stringify(uploadedFiles)}\n\nCHAT HISTORY:\n${JSON.stringify(chatHistory)}\n\nNew question: "${userMessage}"\n\nProvide a concise, helpful, and insightful response.`;
+                    }
+                    
+                    const aiResponse = await callGemini(chatPrompt, true);
+                    thinkingBubble.innerHTML = aiResponse;
+                    chatHistory.push({role: 'model', parts: [{text: aiResponse}]});
+                } catch (error) {
+                    thinkingBubble.innerHTML = `Sorry, an error occurred: ${error.message}`;
+                }
+            }
+
+            function addMessageToChat(role, text) {
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+                bubble.innerHTML = text; // Use innerHTML to render formatted text
+                chatWindow.appendChild(bubble);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+                return bubble;
+            }
+
+            async function callGemini(prompt, isChat = false) {
+                 const apiKey = localStorage.getItem(API_KEY_STORAGE);
+                 if (!apiKey) throw new Error("API Key not found.");
+
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }],
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.json();
+                    const errorDetails = errorBody?.error?.message || `HTTP status ${response.status}`;
+                    throw new Error(`API request failed: ${errorDetails}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    throw new Error(`Content blocked by API. Reason: ${result.promptFeedback.blockReason}`);
+                }
+
+                const candidate = result.candidates?.[0];
+                if (!candidate || !candidate.content || !candidate.content.parts || !candidate.content.parts[0].text) {
+                    const finishReason = candidate?.finishReason || "Unknown";
+                    throw new Error(`Invalid or empty response from API. Finish Reason: ${finishReason}`);
+                }
+
+                let textResponse = candidate.content.parts[0].text;
+                if (!isChat) {
+                    textResponse = textResponse.replace(/^```html\s*/, '').replace(/```$/, '').trim();
+                }
+                return textResponse;
+            }
+
+
+            function drawCoherenceLines(score) {
+                const svg = document.getElementById('svg-container');
+                svg.innerHTML = '';
+                const container = document.getElementById('visualization-container');
+                const assemblyNode = document.getElementById('node-assembly');
+                const presentNode = document.getElementById('node-present');
+                const futureNode = document.getElementById('node-future');
+
+                const getCenter = (el) => {
+                    const rect = el.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    return { x: rect.left - containerRect.left + rect.width / 2, y: rect.top - containerRect.top + rect.height / 2 };
+                };
+
+                const assemblyCenter = getCenter(assemblyNode);
+                const presentCenter = getCenter(presentNode);
+                const futureCenter = getCenter(futureNode);
+
+                const coherenceValue = score / 100;
+                const pastToPresentCoherence = coherenceValue * (Math.random() * 0.4 + 0.8);
+                const presentToFutureCoherence = coherenceValue * (Math.random() * 0.4 + 0.8);
+
+                const getColor = (value) => {
+                    if (value > 0.8) return '#48bb78';
+                    if (value > 0.6) return '#f6e05e';
+                    return '#f56565';
+                };
+
+                const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line1.setAttribute('x1', assemblyCenter.x);
+                line1.setAttribute('y1', assemblyCenter.y);
+                line1.setAttribute('x2', presentCenter.x);
+                line1.setAttribute('y2', presentCenter.y);
+                line1.setAttribute('stroke', getColor(pastToPresentCoherence));
+                line1.setAttribute('stroke-width', '4');
+                svg.appendChild(line1);
+
+                const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line2.setAttribute('x1', presentCenter.x);
+                line2.setAttribute('y1', presentCenter.y);
+                line2.setAttribute('x2', futureCenter.x);
+                line2.setAttribute('y2', futureCenter.y);
+                line2.setAttribute('stroke', getColor(presentToFutureCoherence));
+                line2.setAttribute('stroke-width', '4');
+                svg.appendChild(line2);
+            }
+            
+            new ResizeObserver(() => {
+                if(!screens.dashboard.classList.contains('hidden')) {
+                    const score = parseInt(tcfScoreDisplay.textContent.split('/')[0]);
+                    drawCoherenceLines(score);
+                }
+            }).observe(document.getElementById('visualization-container'));
+        });
+    </script>
+</body>
+</html>
