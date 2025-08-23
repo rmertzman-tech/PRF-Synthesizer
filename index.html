@@ -128,9 +128,9 @@
                 <div class="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md my-6">
                     <h3 class="font-bold">How to Use This Tool:</h3>
                     <ul class="list-disc list-inside mt-2 space-y-1">
-                        <li><strong>Upload your .txt files</strong> from each explorer. You can upload multiple files into the same box.</li>
+                        <li>Use the <strong>"Load Data from Explorers"</strong> button for a quick way to import your saved work.</li>
+                        <li>Alternatively, you can <strong>upload your .txt files</strong> from each explorer. You can upload multiple files into the same box.</li>
                         <li><strong>Edit the text directly</strong> in the display boxes to remove outdated ideas or add new notes.</li>
-                        <li>If you want to start over, use the 'X' button to <strong>clear an entire box</strong>.</li>
                         <li><strong>(Optional) Use the AI Analyzer</strong> to get feedback and suggestions to help you write your synthesis.</li>
                         <li><strong>Write your synthesis</strong>, reflecting on how these different parts of yourself work together.</li>
                         <li><strong>Download your complete PRF</strong> as a single file to save your work.</li>
@@ -144,15 +144,16 @@
 
         <!-- Main App Workspace -->
         <div id="main-app" class="hidden">
-            <!-- NEW: Back to Start Button -->
-            <div class="mb-4">
+            <div class="mb-4 flex justify-between items-center">
                 <button id="back-to-start-from-main-btn" class="btn btn-link">← Back to Start</button>
+                <!-- NEW: Load Data Button -->
+                <button id="load-data-btn" class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load Data from Explorers</button>
             </div>
 
             <!-- Header -->
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
-                <p class="text-gray-600 mt-2">Click or drag-and-drop your saved summaries from the B.R.O.A. explorers to begin.</p>
+                <p class="text-gray-600 mt-2">Load your saved work, or upload your .txt files to begin.</p>
             </div>
 
             <!-- Main Workspace -->
@@ -237,17 +238,15 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Screen Elements ---
-            const startScreen = document.getElementById('start-screen');
-            const explanationScreen = document.getElementById('explanation-screen');
-            const mainApp = document.getElementById('main-app');
-            const demoScreen = document.getElementById('demo-screen');
+            const screens = { start: document.getElementById('start-screen'), explanation: document.getElementById('explanation-screen'), main: document.getElementById('main-app'), demo: document.getElementById('demo-screen'), };
             
             // --- Button Elements ---
             const startHereBtn = document.getElementById('start-here-btn');
             const continueToAppBtn = document.getElementById('continue-to-app-btn');
             const viewDemoBtn = document.getElementById('view-demo-btn');
             const backToMainAppBtn = document.getElementById('back-to-main-app-btn');
-            const backToStartFromMainBtn = document.getElementById('back-to-start-from-main-btn'); // New
+            const backToStartFromMainBtn = document.getElementById('back-to-start-from-main-btn');
+            const loadDataBtn = document.getElementById('load-data-btn'); // New
 
             // --- Main App Elements ---
             const fileInputs = { beliefs: document.getElementById('beliefs-file-input'), rules: document.getElementById('rules-file-input'), ontology: document.getElementById('ontology-file-input'), authenticity: document.getElementById('authenticity-file-input'), };
@@ -265,21 +264,38 @@
             const aiSpinner = document.getElementById('ai-spinner');
 
             // --- Demo Elements ---
-            const demoDisplays = {
-                beliefs: document.getElementById('demo-beliefs-display'),
-                rules: document.getElementById('demo-rules-display'),
-                ontology: document.getElementById('demo-ontology-display'),
-                authenticity: document.getElementById('demo-authenticity-display'),
-                synthesis: document.getElementById('demo-synthesis-input'),
-                ai: document.getElementById('demo-ai-analysis-display'),
-            };
+            const demoDisplays = { beliefs: document.getElementById('demo-beliefs-display'), rules: document.getElementById('demo-rules-display'), ontology: document.getElementById('demo-ontology-display'), authenticity: document.getElementById('demo-authenticity-display'), synthesis: document.getElementById('demo-synthesis-input'), ai: document.getElementById('demo-ai-analysis-display'), };
+            
+            // --- Storage Keys ---
+            const DATA_KEYS = { beliefs: 'prf_beliefs_data', rules: 'prf_rules_data', ontology: 'prf_ontology_data', authenticity: 'prf_authenticity_data' };
 
             // --- Screen Navigation ---
-            startHereBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); explanationScreen.classList.remove('hidden'); });
-            continueToAppBtn.addEventListener('click', () => { explanationScreen.classList.add('hidden'); mainApp.classList.remove('hidden'); mainApp.classList.add('screen'); });
-            viewDemoBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); demoScreen.classList.remove('hidden'); populateDemo(); });
-            backToMainAppBtn.addEventListener('click', () => { demoScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
-            backToStartFromMainBtn.addEventListener('click', () => { mainApp.classList.add('hidden'); startScreen.classList.remove('hidden'); }); // New
+            startHereBtn.addEventListener('click', () => { screens.start.classList.add('hidden'); screens.explanation.classList.remove('hidden'); });
+            continueToAppBtn.addEventListener('click', () => { screens.explanation.classList.add('hidden'); screens.main.classList.remove('hidden'); screens.main.classList.add('screen'); });
+            viewDemoBtn.addEventListener('click', () => { screens.start.classList.add('hidden'); screens.demo.classList.remove('hidden'); populateDemo(); });
+            backToMainAppBtn.addEventListener('click', () => { screens.demo.classList.add('hidden'); screens.start.classList.remove('hidden'); });
+            backToStartFromMainBtn.addEventListener('click', () => { screens.main.classList.add('hidden'); screens.start.classList.remove('hidden'); });
+
+            // --- NEW: Load Data from Local Storage ---
+            loadDataBtn.addEventListener('click', () => {
+                let loadedCount = 0;
+                Object.keys(DATA_KEYS).forEach(key => {
+                    const data = localStorage.getItem(DATA_KEYS[key]);
+                    if (data) {
+                        displays[key].value = data;
+                        uploadBoxes[key].classList.add('filled');
+                        clearButtons[key].classList.remove('hidden');
+                        fileNames[key].textContent = 'Loaded from browser';
+                        fileNames[key].classList.add('text-green-600');
+                        loadedCount++;
+                    }
+                });
+                if(loadedCount > 0) {
+                    alert(`${loadedCount} categor${loadedCount > 1 ? 'ies' : 'y'} of data loaded successfully.`);
+                } else {
+                    alert('No data found in browser storage. Please use the "Save to Synthesizer" button in the explorer apps first.');
+                }
+            });
 
             // --- File Handling Logic ---
             const handleFile = (file, key) => {
