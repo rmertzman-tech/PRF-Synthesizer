@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRF Synthesizer</title>
+    <title>PRF Synthesizer & Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -14,10 +14,6 @@
             background-color: white;
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease-in-out;
-        }
-        .card:hover {
-            transform: translateY(-5px);
         }
         .btn {
             transition: background-color 0.3s, transform 0.2s;
@@ -39,199 +35,391 @@
         .btn-secondary:hover {
             background-color: #4b5563;
         }
-        .btn-disabled {
-            background-color: #d1d5db;
-            cursor: not-allowed;
+        .upload-box {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+            position: relative; /* For positioning the clear button */
+        }
+        .upload-box:hover, .upload-box.drag-over {
+            border-color: #4f46e5;
+            background-color: #f0f2ff;
+        }
+        .upload-box.filled {
+             border-color: #10b981;
+             background-color: #f0fdf4;
+        }
+        .clear-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 1.5rem;
+            height: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .clear-btn:hover {
+            background-color: #dc2626;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden {
+            display: none;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #fff;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4 md:p-8">
 
-    <div id="app" class="w-full max-w-2xl mx-auto">
-        <!-- Initial screen: Resume or Start New -->
-        <div id="initial-screen" class="text-center card p-8">
-            <h1 class="text-3xl font-bold mb-6">PRF Synthesizer</h1>
-            <p class="mb-8 text-gray-600">You can start a new session or resume your previous one if available.</p>
-            <div class="flex justify-center gap-4">
-                <button id="resume-btn" class="btn btn-secondary px-6 py-3 rounded-lg font-semibold text-lg">Resume</button>
-                <button id="new-btn" class="btn btn-primary px-6 py-3 rounded-lg font-semibold text-lg">Start New</button>
-            </div>
-        </div>
-
-        <!-- Main question interface -->
-        <div id="question-screen" class="hidden card p-8">
-            <div class="mb-6">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold" id="question-title"></h2>
-                    <span id="question-counter" class="text-sm font-medium text-gray-500"></span>
-                </div>
-                <p class="text-gray-600 mt-2" id="question-text"></p>
-            </div>
-            <textarea id="response" class="w-full h-48 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type your thoughts here..."></textarea>
-            <div class="flex justify-between mt-6">
-                <button id="prev-btn" class="btn btn-secondary px-5 py-2 rounded-lg font-semibold">Previous</button>
-                <div class="flex gap-2">
-                     <button id="summary-btn" class="btn btn-primary px-5 py-2 rounded-lg font-semibold">Summary</button>
-                     <button id="next-btn" class="btn btn-primary px-5 py-2 rounded-lg font-semibold">Next</button>
+    <div id="app" class="w-full max-w-7xl mx-auto">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen text-center max-w-2xl mx-auto">
+             <div class="card p-8 md:p-12">
+                <h1 class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
+                <p class="text-gray-600 mt-4 mb-8">The central hub for analyzing and integrating your personal insights.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="start-here-btn" class="btn btn-primary px-8 py-3 rounded-lg font-semibold text-lg">Start Here</button>
+                    <button id="view-demo-btn" class="btn btn-secondary px-8 py-3 rounded-lg font-semibold text-lg">View Demo</button>
                 </div>
             </div>
         </div>
 
-        <!-- Summary screen -->
-        <div id="summary-screen" class="hidden card p-8">
-            <h2 class="text-3xl font-bold mb-6 text-center">Summary of Your PRF Synthesis</h2>
-            <div id="summary-content" class="space-y-4"></div>
-            <div class="text-center mt-8">
-                <button id="back-to-questions-btn" class="btn btn-secondary px-6 py-3 rounded-lg font-semibold">Back to Questions</button>
+        <!-- Explanation Screen -->
+        <div id="explanation-screen" class="screen hidden text-left max-w-3xl mx-auto">
+            <div class="card p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-center mb-6">Synthesize Your Framework</h2>
+                <p class="text-gray-700 mb-4">Welcome to the Synthesizer. This is where you bring together the insights you've gathered from the B.R.O.A. (Beliefs, Rules, Ontology, Authenticity) explorers.</p>
+                <div class="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md my-6">
+                    <h3 class="font-bold">How to Use This Tool:</h3>
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li><strong>Upload your .txt files</strong> from each explorer. You can upload multiple files into the same box.</li>
+                        <li><strong>Edit the text directly</strong> in the display boxes to remove outdated ideas or add new notes.</li>
+                        <li>If you want to start over, use the 'X' button to <strong>clear an entire box</strong>.</li>
+                        <li><strong>(Optional) Use the AI Analyzer</strong> to get feedback and suggestions to help you write your synthesis.</li>
+                        <li><strong>Write your synthesis</strong>, reflecting on how these different parts of yourself work together.</li>
+                        <li><strong>Download your complete PRF</strong> as a single file to save your work.</li>
+                    </ul>
+                </div>
+                <div class="text-center">
+                    <button id="continue-to-app-btn" class="btn btn-primary px-8 py-3 rounded-lg font-semibold text-lg">Continue to Synthesizer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App Workspace -->
+        <div id="main-app" class="hidden">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
+                <p class="text-gray-600 mt-2">Click or drag-and-drop your saved summaries from the B.R.O.A. explorers to begin.</p>
+            </div>
+
+            <!-- Main Workspace -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left Column: File Uploads -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="card p-6">
+                        <h2 class="text-xl font-bold mb-4">1. Upload Your Summaries</h2>
+                        <div class="space-y-4">
+                            <!-- Upload Boxes -->
+                            <div id="beliefs-upload-box" class="upload-box"><button id="beliefs-clear-btn" class="clear-btn hidden">&times;</button><p class="font-semibold text-gray-700">Beliefs Summary</p><p id="beliefs-file-name" class="text-sm text-gray-500">Click or drag file(s) here</p><input type="file" id="beliefs-file-input" class="hidden" accept=".txt"></div>
+                            <div id="rules-upload-box" class="upload-box"><button id="rules-clear-btn" class="clear-btn hidden">&times;</button><p class="font-semibold text-gray-700">Rules Summary</p><p id="rules-file-name" class="text-sm text-gray-500">Click or drag file(s) here</p><input type="file" id="rules-file-input" class="hidden" accept=".txt"></div>
+                            <div id="ontology-upload-box" class="upload-box"><button id="ontology-clear-btn" class="clear-btn hidden">&times;</button><p class="font-semibold text-gray-700">Ontology Summary</p><p id="ontology-file-name" class="text-sm text-gray-500">Click or drag file(s) here</p><input type="file" id="ontology-file-input" class="hidden" accept=".txt"></div>
+                            <div id="authenticity-upload-box" class="upload-box"><button id="authenticity-clear-btn" class="clear-btn hidden">&times;</button><p class="font-semibold text-gray-700">Authenticity Summary</p><p id="authenticity-file-name" class="text-sm text-gray-500">Click or drag file(s) here</p><input type="file" id="authenticity-file-input" class="hidden" accept=".txt"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Synthesis & Analysis -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="card p-6">
+                        <h2 class="text-xl font-bold mb-4">2. Review & Edit Your Data</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-[400px] overflow-y-auto p-2 bg-gray-50 rounded-lg">
+                            <textarea id="beliefs-display" class="w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Beliefs data will appear here..."></textarea>
+                            <textarea id="rules-display" class="w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Rules data will appear here..."></textarea>
+                            <textarea id="ontology-display" class="w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Ontology data will appear here..."></textarea>
+                            <textarea id="authenticity-display" class="w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Authenticity data will appear here..."></textarea>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h2 class="text-xl font-bold mb-4">3. Synthesize Your Framework</h2>
+                        <p class="text-gray-600 mb-4">Looking at all your reflections, what connections, patterns, or contradictions do you see? You can write your synthesis on your own, or use the AI analyzer for feedback and ideas.</p>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
+                             <h3 class="font-semibold mb-2">AI-Powered Feedback (Optional)</h3>
+                             <div class="flex flex-col sm:flex-row items-center gap-2">
+                                <input type="password" id="api-key-input" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Enter Google AI API Key">
+                                <button id="analyze-ai-btn" class="btn btn-secondary px-6 py-2 rounded-lg font-semibold flex items-center justify-center w-full sm:w-auto">
+                                    <span id="ai-btn-text">Analyze with AI</span>
+                                    <div id="ai-spinner" class="spinner hidden"></div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="ai-analysis-card" class="mb-6 hidden">
+                            <h3 class="font-semibold mb-2 text-indigo-700">AI Analysis & Feedback</h3>
+                            <div id="ai-analysis-display" class="w-full min-h-[100px] p-3 bg-gray-50 border rounded-lg whitespace-pre-wrap"></div>
+                        </div>
+
+                        <textarea id="synthesis-input" class="w-full h-80 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Write your synthesis here..."></textarea>
+                        
+                        <div class="mt-6 text-right">
+                            <button id="download-prf-btn" class="btn btn-primary px-8 py-3 rounded-lg font-semibold">Download Full PRF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Demo Screen -->
+        <div id="demo-screen" class="hidden screen">
+            <div class="text-center mb-8">
+                <button id="back-to-main-app-btn" class="btn btn-secondary px-6 py-2 rounded-lg font-semibold">← Back to Main App</button>
+                <h1 class="text-4xl font-bold mt-4">PRF Synthesizer (Nelson Mandela Demo)</h1>
+                <p class="text-gray-600 mt-2">This is a pre-populated example to demonstrate the potential of the PRF analysis.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="card p-6"><h2 class="text-xl font-bold mb-4">About This Demo</h2><p class="text-gray-700 mb-4">The text in these boxes has been pre-filled with reflections from the perspective of Nelson Mandela, based on his writings and life.</p><p class="text-gray-700">Notice how both "General" principles and reflections on a "Specific" challenge (the end of apartheid) are included. This is the level of detail to aim for in your own work.</p></div>
+                    <div class="card p-6"><h2 class="text-xl font-bold mb-4">Your Task</h2><p class="text-gray-700">Read through these reflections and the sample synthesis. Then, read the AI's feedback to see how it identifies themes and asks deeper questions. Use this as a model for your own PRF project.</p></div>
+                </div>
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="card p-6"><h2 class="text-xl font-bold mb-4">Review of Pre-populated Data</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-[400px] overflow-y-auto p-2 bg-gray-50 rounded-lg"><textarea id="demo-beliefs-display" class="w-full h-full p-2 border rounded-md bg-white" readonly></textarea><textarea id="demo-rules-display" class="w-full h-full p-2 border rounded-md bg-white" readonly></textarea><textarea id="demo-ontology-display" class="w-full h-full p-2 border rounded-md bg-white" readonly></textarea><textarea id="demo-authenticity-display" class="w-full h-full p-2 border rounded-md bg-white" readonly></textarea></div></div>
+                    <div class="card p-6"><h2 class="text-xl font-bold mb-4">Sample Synthesis</h2><textarea id="demo-synthesis-input" class="w-full h-80 p-3 border border-gray-300 rounded-lg" readonly></textarea><div class="mt-6"><h3 class="font-semibold mb-2 text-indigo-700 text-xl">Sample AI Analysis & Feedback</h3><div id="demo-ai-analysis-display" class="w-full min-h-[100px] p-3 bg-gray-50 border rounded-lg whitespace-pre-wrap"></div></div></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Application state and elements
-            const initialScreen = document.getElementById('initial-screen');
-            const questionScreen = document.getElementById('question-screen');
-            const summaryScreen = document.getElementById('summary-screen');
+            // --- Screen Elements ---
+            const startScreen = document.getElementById('start-screen');
+            const explanationScreen = document.getElementById('explanation-screen');
+            const mainApp = document.getElementById('main-app');
+            const demoScreen = document.getElementById('demo-screen');
+            
+            // --- Button Elements ---
+            const startHereBtn = document.getElementById('start-here-btn');
+            const continueToAppBtn = document.getElementById('continue-to-app-btn');
+            const viewDemoBtn = document.getElementById('view-demo-btn');
+            const backToMainAppBtn = document.getElementById('back-to-main-app-btn');
 
-            const resumeBtn = document.getElementById('resume-btn');
-            const newBtn = document.getElementById('new-btn');
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const summaryBtn = document.getElementById('summary-btn');
-            const backToQuestionsBtn = document.getElementById('back-to-questions-btn');
+            // --- Main App Elements ---
+            const fileInputs = { beliefs: document.getElementById('beliefs-file-input'), rules: document.getElementById('rules-file-input'), ontology: document.getElementById('ontology-file-input'), authenticity: document.getElementById('authenticity-file-input'), };
+            const displays = { beliefs: document.getElementById('beliefs-display'), rules: document.getElementById('rules-display'), ontology: document.getElementById('ontology-display'), authenticity: document.getElementById('authenticity-display'), };
+            const fileNames = { beliefs: document.getElementById('beliefs-file-name'), rules: document.getElementById('rules-file-name'), ontology: document.getElementById('ontology-file-name'), authenticity: document.getElementById('authenticity-file-name'), };
+            const uploadBoxes = { beliefs: document.getElementById('beliefs-upload-box'), rules: document.getElementById('rules-upload-box'), ontology: document.getElementById('ontology-upload-box'), authenticity: document.getElementById('authenticity-upload-box'), };
+            const clearButtons = { beliefs: document.getElementById('beliefs-clear-btn'), rules: document.getElementById('rules-clear-btn'), ontology: document.getElementById('ontology-clear-btn'), authenticity: document.getElementById('authenticity-clear-btn'), };
+            const synthesisInput = document.getElementById('synthesis-input');
+            const downloadPrfBtn = document.getElementById('download-prf-btn');
+            const analyzeAiBtn = document.getElementById('analyze-ai-btn');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const aiAnalysisCard = document.getElementById('ai-analysis-card');
+            const aiAnalysisDisplay = document.getElementById('ai-analysis-display');
+            const aiBtnText = document.getElementById('ai-btn-text');
+            const aiSpinner = document.getElementById('ai-spinner');
 
-            const questionTitle = document.getElementById('question-title');
-            const questionText = document.getElementById('question-text');
-            const questionCounter = document.getElementById('question-counter');
-            const responseTextArea = document.getElementById('response');
-            const summaryContent = document.getElementById('summary-content');
-
-            const storageKey = 'prf_synthesizer_app_state';
-
-            // --- Questions Data ---
-            const questions = [
-                { title: "Purpose", text: "What is the central purpose or goal you are trying to achieve? What is the 'why' behind this endeavor?" },
-                { title: "Realities", text: "What are the key realities of your current situation? What are the facts, challenges, and resources available to you?" },
-                { title: "Failures", text: "What are the potential failures or obstacles that could prevent you from achieving your purpose? What could go wrong?" },
-                { title: "Synthesis", text: "Synthesize the information from the previous steps. Based on your purpose, realities, and potential failures, what is the most logical and effective path forward? What are your next steps?" }
-            ];
-
-            let currentState = {
-                currentQuestionIndex: 0,
-                responses: Array(questions.length).fill('')
+            // --- Demo Elements ---
+            const demoDisplays = {
+                beliefs: document.getElementById('demo-beliefs-display'),
+                rules: document.getElementById('demo-rules-display'),
+                ontology: document.getElementById('demo-ontology-display'),
+                authenticity: document.getElementById('demo-authenticity-display'),
+                synthesis: document.getElementById('demo-synthesis-input'),
+                ai: document.getElementById('demo-ai-analysis-display'),
             };
 
-            // --- Initialization ---
-            function init() {
-                const savedState = localStorage.getItem(storageKey);
-                if (savedState) {
-                    resumeBtn.classList.remove('btn-disabled');
-                    resumeBtn.disabled = false;
+            // --- Screen Navigation ---
+            startHereBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); explanationScreen.classList.remove('hidden'); });
+            continueToAppBtn.addEventListener('click', () => { explanationScreen.classList.add('hidden'); mainApp.classList.remove('hidden'); mainApp.classList.add('screen'); });
+            viewDemoBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); demoScreen.classList.remove('hidden'); populateDemo(); });
+            backToMainAppBtn.addEventListener('click', () => { demoScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+
+            // --- File Handling Logic ---
+            const handleFile = (file, key) => {
+                if (file && file.type === 'text/plain') {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const display = displays[key];
+                        const newContent = e.target.result;
+                        if (display.value.trim().length > 0) {
+                            display.value += `\n\n----------\n(New File: ${file.name})\n----------\n\n` + newContent;
+                        } else {
+                            display.value = newContent;
+                        }
+                        fileNames[key].textContent = `Added: ${file.name}`;
+                        fileNames[key].classList.add('text-green-600');
+                        uploadBoxes[key].classList.add('filled');
+                        clearButtons[key].classList.remove('hidden');
+                    };
+                    reader.readAsText(file);
                 } else {
-                    resumeBtn.classList.add('btn-disabled');
-                    resumeBtn.disabled = true;
+                    alert('Please upload a valid .txt file.');
                 }
-            }
+            };
 
-            // --- Event Listeners ---
-            newBtn.addEventListener('click', startNewSession);
-            resumeBtn.addEventListener('click', resumeSession);
-            nextBtn.addEventListener('click', handleNext);
-            prevBtn.addEventListener('click', handlePrev);
-            summaryBtn.addEventListener('click', showSummary);
-            backToQuestionsBtn.addEventListener('click', () => showScreen('question'));
-            responseTextArea.addEventListener('input', saveCurrentResponse);
-
-            // --- Core Logic ---
-            function startNewSession() {
-                currentState = {
-                    currentQuestionIndex: 0,
-                    responses: Array(questions.length).fill('')
-                };
-                saveState();
-                renderQuestion();
-                showScreen('question');
-            }
-            
-            // --- MODIFIED FUNCTION ---
-            function resumeSession() {
-                const savedState = localStorage.getItem(storageKey);
-                if (savedState) {
-                    currentState = JSON.parse(savedState);
-                    renderQuestion();
-                    showScreen('question');
-                }
-            }
-
-            function handleNext() {
-                if (currentState.currentQuestionIndex < questions.length - 1) {
-                    currentState.currentQuestionIndex++;
-                    renderQuestion();
-                } else {
-                    showSummary();
-                }
-            }
-
-            function handlePrev() {
-                if (currentState.currentQuestionIndex > 0) {
-                    currentState.currentQuestionIndex--;
-                    renderQuestion();
-                }
-            }
-
-            function saveCurrentResponse() {
-                currentState.responses[currentState.currentQuestionIndex] = responseTextArea.value;
-                saveState();
-            }
-
-            function saveState() {
-                localStorage.setItem(storageKey, JSON.stringify(currentState));
-            }
-
-            // --- Rendering and UI ---
-            function renderQuestion() {
-                const index = currentState.currentQuestionIndex;
-                const question = questions[index];
-                questionTitle.textContent = question.title;
-                questionText.textContent = question.text;
-                responseTextArea.value = currentState.responses[index] || '';
-                questionCounter.textContent = `Step ${index + 1} of ${questions.length}`;
-
-                prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
-                nextBtn.textContent = index === questions.length - 1 ? 'Finish' : 'Next';
-            }
-
-            function showSummary() {
-                summaryContent.innerHTML = '';
-                questions.forEach((q, index) => {
-                    const response = currentState.responses[index];
-                    const summaryItem = document.createElement('div');
-                    summaryItem.className = 'p-4 border rounded-lg bg-gray-50';
-                    summaryItem.innerHTML = `
-                        <h3 class="font-bold text-lg text-indigo-700">${q.title}</h3>
-                        <p class="mt-2 text-gray-700">${response ? response.replace(/\n/g, '<br>') : '<em>No response given.</em>'}</p>
-                    `;
-                    summaryContent.appendChild(summaryItem);
+            Object.keys(fileInputs).forEach(key => {
+                const inputBox = uploadBoxes[key];
+                const fileInput = fileInputs[key];
+                const clearBtn = clearButtons[key];
+                inputBox.addEventListener('click', (e) => { if (e.target !== clearBtn) fileInput.click(); });
+                fileInput.addEventListener('change', (event) => handleFile(event.target.files[0], key));
+                inputBox.addEventListener('dragover', (event) => { event.preventDefault(); inputBox.classList.add('drag-over'); });
+                inputBox.addEventListener('dragleave', () => inputBox.classList.remove('drag-over'));
+                inputBox.addEventListener('drop', (event) => { event.preventDefault(); inputBox.classList.remove('drag-over'); handleFile(event.dataTransfer.files[0], key); });
+                clearBtn.addEventListener('click', () => {
+                    displays[key].value = '';
+                    fileNames[key].textContent = 'Click or drag file(s) here';
+                    fileNames[key].classList.remove('text-green-600');
+                    uploadBoxes[key].classList.remove('filled');
+                    clearBtn.classList.add('hidden');
+                    fileInput.value = ''; 
                 });
-                showScreen('summary');
-            }
-
-            function showScreen(screenName) {
-                initialScreen.classList.add('hidden');
-                questionScreen.classList.add('hidden');
-                summaryScreen.classList.add('hidden');
-
-                if (screenName === 'initial') {
-                    initialScreen.classList.remove('hidden');
-                } else if (screenName === 'question') {
-                    questionScreen.classList.remove('hidden');
-                } else if (screenName === 'summary') {
-                    summaryScreen.classList.remove('hidden');
-                }
-            }
+            });
             
-            init();
+            // --- AI Analysis Logic ---
+            analyzeAiBtn.addEventListener('click', async () => {
+                const apiKey = apiKeyInput.value.trim();
+                if (!apiKey) {
+                    alert('Please enter your Google AI API key to use this feature.');
+                    return;
+                }
+
+                const beliefsText = displays.beliefs.value || "No beliefs data provided.";
+                const rulesText = displays.rules.value || "No rules data provided.";
+                const ontologyText = displays.ontology.value || "No ontology data provided.";
+                const authenticityText = displays.authenticity.value || "No authenticity data provided.";
+                const synthesisText = synthesisInput.value || "No synthesis written yet.";
+
+                const prompt = `
+                    You are a helpful philosophy tutor providing feedback on a student's Personal Reality Framework. Your goal is to assess the depth of their reflection and guide them toward a more coherent self-understanding.
+                    **Step 1: Assess the Input Quality**
+                    First, review the student's reflections for each of the four areas (Beliefs, Rules, Ontology, Authenticity). For each section, determine if the input is:
+                    - **Detailed:** Contains specific examples, multiple sentences, and demonstrates thoughtful engagement.
+                    - **General:** Contains brief statements, clichés, or lacks specific personal context.
+                    - **Insufficient:** Is empty, contains only a few words, or is too vague to be analyzed.
+                    **Step 2: Provide Feedback Based on Quality**
+                    **If one or more sections have "Insufficient" or "General" input:**
+                    - Start your feedback by gently pointing this out. For example: "Thank you for sharing your thoughts. To provide a deeper analysis, it would be helpful to have more detail in the following areas: [List the specific sections that need more work]."
+                    - Then, provide a **preliminary analysis** based on the limited information available. Qualify your feedback by saying something like, "Based on the information you've provided so far, here are a few initial observations..."
+                    - Conclude by encouraging them to add more detail to their reflections and then run the analysis again for a more personalized response.
+                    **If all sections have "Detailed" input:**
+                    - Begin by acknowledging their thoughtful work.
+                    - Then, provide the full, three-part analysis:
+                        1.  **Key Themes:** Identify 2-3 recurring themes or core ideas that appear across the different sections.
+                        2.  **Potential Tensions:** Point out 1-2 areas where there might be a contradiction or tension between their stated beliefs, rules, and actions. Frame these as questions for further reflection.
+                        3.  **A Question for Deeper Synthesis:** Ask one powerful, open-ended question that encourages the student to connect their ideas in a new way.
+                    Here is the student's data:
+                    --- BELIEFS ---
+                    ${beliefsText}
+                    --- RULES ---
+                    ${rulesText}
+                    --- ONTOLOGY ---
+                    ${ontologyText}
+                    --- AUTHENTICITY ---
+                    ${authenticityText}
+                    --- STUDENT'S SYNTHESIS ---
+                    ${synthesisText}
+                `;
+
+                aiBtnText.classList.add('hidden');
+                aiSpinner.classList.remove('hidden');
+                analyzeAiBtn.disabled = true;
+
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+
+                    if (!response.ok) { throw new Error(`API request failed with status ${response.status}`); }
+
+                    const result = await response.json();
+                    const feedback = result.candidates[0].content.parts[0].text;
+                    aiAnalysisDisplay.textContent = feedback;
+                    aiAnalysisCard.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('AI Analysis Error:', error);
+                    aiAnalysisDisplay.textContent = 'An error occurred while analyzing. Please check your API key and try again. See the console for more details.';
+                    aiAnalysisCard.classList.remove('hidden');
+                } finally {
+                    aiBtnText.classList.remove('hidden');
+                    aiSpinner.classList.add('hidden');
+                    analyzeAiBtn.disabled = false;
+                }
+            });
+
+            // --- Download Full PRF ---
+            downloadPrfBtn.addEventListener('click', () => {
+                let fullPrfText = "My Personal Reality Framework\n============================\n\n";
+                fullPrfText += "--- BELIEFS ---\n" + (displays.beliefs.value || "No data uploaded.") + "\n\n";
+                fullPrfText += "--- RULES ---\n" + (displays.rules.value || "No data uploaded.") + "\n\n";
+                fullPrfText += "--- ONTOLOGY ---\n" + (displays.ontology.value || "No data uploaded.") + "\n\n";
+                fullPrfText += "--- AUTHENTICITY ---\n" + (displays.authenticity.value || "No data uploaded.") + "\n\n";
+                fullPrfText += "============================\n--- MY SYNTHESIS ---\n" + (synthesisInput.value || "No synthesis written.") + "\n\n";
+                if (!aiAnalysisCard.classList.contains('hidden')) {
+                     fullPrfText += "============================\n--- AI ANALYSIS ---\n" + (aiAnalysisDisplay.textContent || "No analysis generated.") + "\n";
+                }
+
+                const blob = new Blob([fullPrfText], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'My-Personal-Reality-Framework.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // --- Demo Data and Logic ---
+            const demoData = {
+                beliefs: `(File: General-Beliefs-Summary.txt)\n--- Belief 1: The Nature of Reality ---\nI believe reality is fundamentally social and interconnected. No person is an island. Our humanity is bound up in the humanity of others. To deny others their humanity is to diminish our own. The spiritual dimension is not separate from the physical; it is found in the courage, compassion, and resilience of people fighting for a just world.\n\n(File: End-of-Apartheid-Beliefs-Summary.txt)\n--- Present Belief ---\nRight now, my most central belief about this situation with "the end of apartheid" is that our oppressors are also victims of an inhuman system. They are not monsters, but men who have been warped by fear and prejudice. To achieve a lasting peace, we must believe in their capacity to change, even when all evidence is to the contrary. This belief in a shared, redeemable humanity is the only foundation upon which a new nation can be built.`,
+                rules: `(File: General-Rules-Summary.txt)\n--- Rule 2: Self-Made Rules ---\nA rule I created for myself is to find the good in even my greatest enemies. During my years in prison, I learned that if I hated my captors, they would have truly imprisoned me. My freedom began the moment I decided not to be a victim of bitterness. This rule—to seek understanding over judgment—became my primary tool for survival and, later, for negotiation.\n\n(File: End-of-Apartheid-Rules-Summary.txt)\n--- Primary Rule ---\nThe main rule I am trying to follow right now in "the end of apartheid" is that the process of reconciliation is as important as the outcome. We cannot build a democratic future using the tools of oppression. This means negotiating with our enemies, even when it is painful. It means choosing restorative justice over retribution. The new South Africa must be for everyone, including those who fought against it.`,
+                ontology: `(File: General-Ontology-Summary.txt)\n--- Identity & Change ---\nPersonal identity is not fixed. It is forged in the crucible of struggle. I went into prison a hot-headed young man and emerged a patient leader. The core of who I am—my commitment to justice—did not change, but my understanding of how to achieve it was transformed. We are not defined by our past mistakes, but by our capacity to learn from them and grow.\n\n(File: End-of-Apartheid-Ontology-Summary.txt)\n--- Key 'Things' ---\nIn this situation with "the end of apartheid", the most important 'things' that exist are not just people and laws, but also symbols, memories, and fears. The 'real' battle is not just for political power, but for the narrative of our country. Is South Africa a story of racial domination, or is it a story of a shared future? The most real things we are building are trust and a new national identity.`,
+                authenticity: `(File: General-Authenticity-Summary.txt)\n--- Internal vs. External Self ---\nFor many years, there was a great difference. The world saw me as a symbol, a revolutionary. But on the inside, I was a man who missed his family, who felt fear and doubt. To be a leader, I had to project an image of unwavering strength. But true authenticity, I learned, is not about having no fear; it is about acting in service of your values despite your fear.\n\n(File: End-of-Apartheid-Authenticity-Summary.txt)\n--- The 'Mask' ---\nIn the situation with "the end of apartheid," the 'mask' I had to wear was one of absolute certainty and patience, especially during negotiations. Internally, I felt immense pressure and frustration. But to show that would have been a strategic disaster. My authentic self is the man committed to a free South Africa; the calm negotiator was the role I had to play to be true to that deepest self. It was a necessary performance to achieve an authentic goal.`,
+                synthesis: `My framework is built on a core belief in our shared and redeemable humanity. This is not a naive hope, but a strategic necessity for building a lasting peace. This core belief directly informs my primary rule: to engage with my opponents not as monsters to be defeated, but as partners in building a new reality.\n\nThis approach recognizes that the most 'real' things we are dealing with are not just political structures, but the deep-seated fears and historical narratives that hold those structures in place. Therefore, the work of liberation is also the work of changing minds and healing a nation's soul.\n\nMy own identity was forged through this struggle. The 'mask' of the unwavering leader was a tool I had to use to serve my most authentic commitment—the creation of a democratic and free South Africa for all. The tension between my internal feelings and my external role was real, but it was resolved by a higher purpose. My personal freedom and the freedom of my people were inextricably linked. The ultimate synthesis of my framework is this: true leadership requires one to be both a pragmatist and a visionary, to hold an unshakable belief in human dignity while navigating the messy, imperfect reality of human affairs.`,
+                ai: `Thank you for these incredibly thoughtful and detailed reflections. Your framework demonstrates a profound level of self-awareness and integrity.\n\n**Key Themes:**\n1.  **Strategic Idealism:** A powerful theme is your belief in the "redeemable humanity" of all people, including your opponents. You frame this not as a passive hope, but as a core strategic principle for achieving political and social change.\n2.  **The Inner Struggle of Leadership:** You consistently acknowledge the tension between your internal feelings (fear, frustration, doubt) and the external role you must play. Your authenticity is not about expressing every feeling, but about aligning your actions with your deepest, most authentic purpose.\n3.  **Transformation through Struggle:** You see identity not as a static thing, but as something that is forged and refined through hardship. Your time in prison was not just a period of suffering, but a crucible that transformed you into a more effective leader.\n\n**Potential Tensions:**\n- Your framework holds two powerful ideas in a delicate balance: the unwavering commitment to justice and the pragmatic need for reconciliation with former oppressors. How do you navigate the moments when the demand for justice for past crimes seems to conflict directly with the need for a peaceful, unified future?\n\n**A Question for Deeper Synthesis:**\n- You speak of building a new "national identity." Given that your own identity was forged through struggle, what shared struggles or challenges must all South Africans now face together to forge a new, unified identity that transcends the divisions of the past?`
+            };
+            
+            function populateDemo() {
+                demoDisplays.beliefs.value = demoData.beliefs;
+                demoDisplays.rules.value = demoData.rules;
+                demoDisplays.ontology.value = demoData.ontology;
+                demoDisplays.authenticity.value = demoData.authenticity;
+                demoDisplays.synthesis.value = demoData.synthesis;
+                demoDisplays.ai.textContent = demoData.ai;
+            }
         });
     </script>
 </body>
