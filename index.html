@@ -93,6 +93,15 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .btn-link {
+            background: none;
+            color: #4f46e5;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+        .btn-link:hover {
+            color: #4338ca;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4 md:p-8">
@@ -135,6 +144,11 @@
 
         <!-- Main App Workspace -->
         <div id="main-app" class="hidden">
+            <!-- NEW: Back to Start Button -->
+            <div class="mb-4">
+                <button id="back-to-start-from-main-btn" class="btn btn-link">← Back to Start</button>
+            </div>
+
             <!-- Header -->
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
@@ -182,6 +196,7 @@
                                     <div id="ai-spinner" class="spinner hidden"></div>
                                 </button>
                             </div>
+                            <p class="text-xs text-gray-500 mt-2">The AI feature is optional. To use it, get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline">Google AI Studio</a>.</p>
                         </div>
                         
                         <div id="ai-analysis-card" class="mb-6 hidden">
@@ -199,7 +214,7 @@
             </div>
         </div>
 
-        <!-- NEW: Demo Screen -->
+        <!-- Demo Screen -->
         <div id="demo-screen" class="hidden screen">
             <div class="text-center mb-8">
                 <button id="back-to-main-app-btn" class="btn btn-secondary px-6 py-2 rounded-lg font-semibold">← Back to Main App</button>
@@ -232,6 +247,7 @@
             const continueToAppBtn = document.getElementById('continue-to-app-btn');
             const viewDemoBtn = document.getElementById('view-demo-btn');
             const backToMainAppBtn = document.getElementById('back-to-main-app-btn');
+            const backToStartFromMainBtn = document.getElementById('back-to-start-from-main-btn'); // New
 
             // --- Main App Elements ---
             const fileInputs = { beliefs: document.getElementById('beliefs-file-input'), rules: document.getElementById('rules-file-input'), ontology: document.getElementById('ontology-file-input'), authenticity: document.getElementById('authenticity-file-input'), };
@@ -263,6 +279,7 @@
             continueToAppBtn.addEventListener('click', () => { explanationScreen.classList.add('hidden'); mainApp.classList.remove('hidden'); mainApp.classList.add('screen'); });
             viewDemoBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); demoScreen.classList.remove('hidden'); populateDemo(); });
             backToMainAppBtn.addEventListener('click', () => { demoScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+            backToStartFromMainBtn.addEventListener('click', () => { mainApp.classList.add('hidden'); startScreen.classList.remove('hidden'); }); // New
 
             // --- File Handling Logic ---
             const handleFile = (file, key) => {
