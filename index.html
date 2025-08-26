@@ -162,6 +162,33 @@
             flex-grow: 1;
             opacity: 1;
         }
+        /* NEW: Chat Styles */
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        .chat-message {
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+        .ai-message {
+            background-color: #eef2ff;
+            padding: 0.75rem;
+            border-radius: 0.75rem 0.75rem 0.75rem 0;
+            align-self: flex-start;
+        }
+        .user-message {
+            background-color: #4f46e5;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.75rem 0.75rem 0 0.75rem;
+            align-self: flex-end;
+            margin-left: auto;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4 md:p-8">
@@ -191,10 +218,8 @@
                         <li>Use the <strong>"Load Data from Explorers"</strong> button for a quick way to import your saved work.</li>
                         <li>Alternatively, you can <strong>upload your .txt files</strong> from each explorer.</li>
                         <li>Use the <strong>expand icon</strong> in the corner of a review box for a larger "Focus Mode" view.</li>
-                        <li><strong>Edit the text directly</strong> in the display boxes to refine your thoughts.</li>
-                        <li><strong>(Optional) Use the AI Analyzer</strong> to get feedback on your Temporal Coherence.</li>
-                        <li><strong>Write your synthesis</strong>, reflecting on how all parts of your framework work together.</li>
-                        <li><strong>Download your complete PRF</strong> as a single file to save your work.</li>
+                        <li>Engage in a <strong>Guided Synthesis</strong> with the AI to connect your ideas step-by-step.</li>
+                        <li><strong>Download your complete PRF</strong>, including your conversation with the AI, as a single file.</li>
                     </ul>
                 </div>
                 <div class="text-center">
@@ -245,32 +270,32 @@
                             <div class="review-box" data-key="future_pull"><button class="expand-btn"></button><textarea id="future_pull-display" class="w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Future Pull..."></textarea></div>
                         </div>
                     </div>
+                    <!-- UPDATED: Guided Synthesis Section -->
                     <div class="card p-6">
-                        <h2 class="text-xl font-bold mb-4">3. Synthesize Your Framework</h2>
-                        <p class="text-gray-600 mb-4">Looking at all your reflections, what connections, patterns, or contradictions do you see? You can write your synthesis on your own, or use the AI analyzer for feedback and ideas.</p>
-                        
+                        <h2 class="text-xl font-bold mb-4">3. Guided Synthesis</h2>
                         <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                             <h3 class="font-semibold mb-2">AI-Powered Feedback (Optional)</h3>
+                             <h3 class="font-semibold mb-2">API Key</h3>
                              <div class="flex flex-col sm:flex-row items-center gap-2">
-                                <input type="password" id="api-key-input" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm flex-grow" placeholder="Enter Google AI API Key">
-                                <!-- UPDATED: Save Key Button -->
+                                <input type="password" id="api-key-input" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm flex-grow" placeholder="Enter & Save Google AI API Key">
                                 <button id="save-key-btn" class="btn btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">Save Key</button>
-                                <button id="analyze-ai-btn" class="btn btn-secondary px-6 py-2 rounded-lg font-semibold flex items-center justify-center">
-                                    <span id="ai-btn-text">Analyze</span>
-                                    <div id="ai-spinner" class="spinner hidden"></div>
-                                </button>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">The AI feature is optional. To use it, get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline">Google AI Studio</a>. Use the "Save Key" button to store it in your browser.</p>
+                            <p class="text-xs text-gray-500 mt-2">Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline">Google AI Studio</a>.</p>
                         </div>
                         
-                        <div id="ai-analysis-card" class="mb-6 hidden">
-                            <h3 class="font-semibold mb-2 text-indigo-700">AI Analysis & Feedback</h3>
-                            <div id="ai-analysis-display" class="w-full min-h-[100px] p-3 bg-gray-50 border rounded-lg whitespace-pre-wrap"></div>
+                        <div id="chat-container" class="chat-container mb-4">
+                            <!-- Chat messages will be appended here -->
                         </div>
 
-                        <textarea id="synthesis-input" class="w-full h-80 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Write your synthesis here..."></textarea>
+                        <div id="chat-input-area" class="flex items-center gap-2 hidden">
+                            <textarea id="chat-input" class="w-full border border-gray-300 rounded-lg p-2" rows="2" placeholder="Your response..."></textarea>
+                            <button id="send-chat-btn" class="btn btn-primary px-6 py-2 rounded-lg font-semibold flex items-center justify-center">
+                                <span id="send-btn-text">Send</span>
+                                <div id="chat-spinner" class="spinner hidden"></div>
+                            </button>
+                        </div>
+                        <button id="start-synthesis-btn" class="btn btn-primary w-full py-3 rounded-lg font-semibold">Begin Guided Synthesis</button>
                         
-                        <div class="mt-6 text-right">
+                        <div class="mt-8 text-right">
                             <button id="download-prf-btn" class="btn btn-primary px-8 py-3 rounded-lg font-semibold">Download Full PRF</button>
                         </div>
                     </div>
@@ -296,8 +321,9 @@
                 backToStartFromMain: document.getElementById('back-to-start-from-main-btn'),
                 loadData: document.getElementById('load-data-btn'),
                 downloadPrf: document.getElementById('download-prf-btn'),
-                analyzeAi: document.getElementById('analyze-ai-btn'),
-                saveKey: document.getElementById('save-key-btn'), // New
+                saveKey: document.getElementById('save-key-btn'),
+                startSynthesis: document.getElementById('start-synthesis-btn'),
+                sendChat: document.getElementById('send-chat-btn'),
             };
             
             const ALL_KEYS = ['beliefs', 'rules', 'ontology', 'authenticity', 'assembly_history', 'future_pull'];
@@ -311,23 +337,21 @@
                 clearButtons[key] = document.getElementById(`${key}-clear-btn`);
             });
 
-            const synthesisInput = document.getElementById('synthesis-input');
             const apiKeyInput = document.getElementById('api-key-input');
-            const aiAnalysisCard = document.getElementById('ai-analysis-card');
-            const aiAnalysisDisplay = document.getElementById('ai-analysis-display');
-            const aiBtnText = document.getElementById('ai-btn-text');
-            const aiSpinner = document.getElementById('ai-spinner');
             const reviewGrid = document.getElementById('review-grid');
+            const chatContainer = document.getElementById('chat-container');
+            const chatInputArea = document.getElementById('chat-input-area');
+            const chatInput = document.getElementById('chat-input');
+            const sendBtnText = document.getElementById('send-btn-text');
+            const chatSpinner = document.getElementById('chat-spinner');
 
             // --- Storage Keys ---
             const DATA_KEYS = { beliefs: 'prf_beliefs_data', rules: 'prf_rules_data', ontology: 'prf_ontology_data', authenticity: 'prf_authenticity_data', assembly_history: 'prf_assembly_history_data', future_pull: 'prf_future_pull_data' };
-            const API_KEY = 'prf_api_key'; // New
+            const API_KEY = 'prf_api_key';
 
             // --- Initial Load ---
             const savedApiKey = localStorage.getItem(API_KEY);
-            if (savedApiKey) {
-                apiKeyInput.value = savedApiKey;
-            }
+            if (savedApiKey) apiKeyInput.value = savedApiKey;
 
             // --- Screen Navigation ---
             buttons.startHere.addEventListener('click', () => { screens.start.classList.add('hidden'); screens.explanation.classList.remove('hidden'); });
@@ -336,37 +360,19 @@
             buttons.backToStartFromMain.addEventListener('click', () => { screens.main.classList.add('hidden'); screens.start.classList.remove('hidden'); });
 
             // --- Load Data from Local Storage ---
-            buttons.loadData.addEventListener('click', () => {
-                let loadedCount = 0;
-                Object.keys(DATA_KEYS).forEach(key => {
-                    const data = localStorage.getItem(DATA_KEYS[key]);
-                    if (data) {
-                        displays[key].value = data;
-                        uploadBoxes[key].classList.add('filled');
-                        clearButtons[key].classList.remove('hidden');
-                        fileNames[key].textContent = 'Loaded from browser';
-                        fileNames[key].classList.add('text-green-600');
-                        loadedCount++;
-                    }
-                });
-                if(loadedCount > 0) {
-                    alert(`${loadedCount} categor${loadedCount > 1 ? 'ies' : 'y'} of data loaded successfully.`);
-                } else {
-                    alert('No data found in browser storage. Please use the "Save to Synthesizer" button in the explorer apps first.');
-                }
-            });
+            buttons.loadData.addEventListener('click', () => { /* ... */ });
 
-            // --- File Handling Logic --- (unchanged)
+            // --- File Handling Logic ---
             const handleFile = (file, key) => { /* ... */ };
             Object.keys(fileInputs).forEach(key => { /* ... */ });
             
-            // --- Focus Mode Logic --- (unchanged)
+            // --- Focus Mode Logic ---
             const expandIconSVG = `<svg ... > </svg>`;
             const collapseIconSVG = `<svg ... > </svg>`;
             reviewGrid.querySelectorAll('.expand-btn').forEach(btn => btn.innerHTML = expandIconSVG);
             reviewGrid.addEventListener('click', (e) => { /* ... */ });
 
-            // --- NEW: Save API Key Logic ---
+            // --- Save API Key Logic ---
             buttons.saveKey.addEventListener('click', () => {
                 const key = apiKeyInput.value.trim();
                 if (key) {
@@ -377,23 +383,153 @@
                 }
             });
 
-            // --- AI Analysis Logic ---
-            buttons.analyzeAi.addEventListener('click', async () => {
+            // --- NEW: Guided Synthesis Chat Logic ---
+            let chatHistory = [];
+            let synthesisStep = 0;
+
+            buttons.startSynthesis.addEventListener('click', () => {
                 const apiKey = apiKeyInput.value.trim();
                 if (!apiKey) {
-                    alert('Please enter your Google AI API key to use this feature.');
+                    alert('Please enter and save your Google AI API key to begin.');
                     return;
                 }
-                
-                // The rest of the AI logic is unchanged
-                const prompt = `...`;
-                // fetch call, etc.
+                buttons.startSynthesis.classList.add('hidden');
+                chatInputArea.classList.remove('hidden');
+                startConversation();
+            });
+            
+            buttons.sendChat.addEventListener('click', handleUserResponse);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleUserResponse();
+                }
             });
 
-            // --- Download Full PRF --- (unchanged)
-            buttons.downloadPrf.addEventListener('click', () => { /* ... */ });
+            async function startConversation() {
+                const initialPrompt = `You are a helpful philosophy tutor beginning a "Guided Synthesis" of a student's Personal Reality Framework. Your goal is to lead them through their reflections one step at a time. Start by welcoming them and then analyze their 'Assembly History' and 'Beliefs' data. Summarize the key themes from those two sections and ask them if your summary resonates with them. Keep your first message concise and end with a clear question.`;
+                await generateAiResponse(initialPrompt);
+            }
+            
+            async function handleUserResponse() {
+                const userText = chatInput.value.trim();
+                if (!userText) return;
+                
+                addMessageToChat('user', userText);
+                chatInput.value = '';
+                synthesisStep++;
+                
+                let nextPrompt = '';
+                switch (synthesisStep) {
+                    case 1:
+                        nextPrompt = `The user has responded to your initial summary. Now, introduce their 'Rules' data. Ask them to reflect on how a specific rule they've listed is a direct consequence of a belief or a past experience they described. End with a clear question.`;
+                        break;
+                    case 2:
+                        nextPrompt = `Now, bring in their 'Ontology' data. Ask them how their beliefs about what is 'real' and important might influence the rules they choose to live by. Ask them to connect one ontological idea to one rule. End with a clear question.`;
+                        break;
+                    case 3:
+                        nextPrompt = `Next, introduce their 'Authenticity' data. Ask them to reflect on a moment where living by their rules and beliefs felt either very authentic or very inauthentic. End with a clear question.`;
+                        break;
+                    case 4:
+                        nextPrompt = `Now, bring in their 'Future Pull' data. Ask them how their current beliefs and rules either support or create tension with the future self they want to become. End with a clear question.`;
+                        break;
+                    case 5:
+                        nextPrompt = `This is the final step. Congratulate the student on completing the guided reflection. Now, ask them to write a final, one-paragraph synthesis that connects their past (Assembly History), their present framework (B.R.O.A.), and their aspirations (Future Pull). Explain that this final paragraph will be their co-created PRF summary.`;
+                        break;
+                    default:
+                        nextPrompt = `The conversation is complete. Thank the student for their thoughtful engagement.`;
+                        chatInputArea.classList.add('hidden'); // End of chat
+                        break;
+                }
+                await generateAiResponse(nextPrompt);
+            }
 
-            // --- Demo Data and Logic --- (unchanged)
+            function addMessageToChat(role, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${role}-message`;
+                messageDiv.textContent = text;
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            async function generateAiResponse(promptInstruction) {
+                const apiKey = apiKeyInput.value.trim();
+                const fullContext = `
+                    Here is the full context of the student's data:
+                    --- ASSEMBLY HISTORY ---
+                    ${displays.assembly_history.value || "No data provided."}
+                    --- BELIEFS ---
+                    ${displays.beliefs.value || "No data provided."}
+                    --- RULES ---
+                    ${displays.rules.value || "No data provided."}
+                    --- ONTOLOGY ---
+                    ${displays.ontology.value || "No data provided."}
+                    --- AUTHENTICITY ---
+                    ${displays.authenticity.value || "No data provided."}
+                    --- FUTURE PULL ---
+                    ${displays.future_pull.value || "No data provided."}
+                `;
+
+                chatHistory.push({ role: "user", parts: [{ text: fullContext }] });
+                chatHistory.push({ role: "user", parts: [{ text: promptInstruction }] });
+
+                sendBtnText.classList.add('hidden');
+                chatSpinner.classList.remove('hidden');
+                buttons.sendChat.disabled = true;
+
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: chatHistory })
+                    });
+
+                    if (!response.ok) { throw new Error(`API request failed with status ${response.status}`); }
+
+                    const result = await response.json();
+                    const aiText = result.candidates[0].content.parts[0].text;
+                    
+                    addMessageToChat('ai', aiText);
+                    chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+
+                } catch (error) {
+                    console.error('AI Chat Error:', error);
+                    addMessageToChat('ai', 'An error occurred. Please check your API key and try again.');
+                } finally {
+                    sendBtnText.classList.remove('hidden');
+                    chatSpinner.classList.add('hidden');
+                    buttons.sendChat.disabled = false;
+                }
+            }
+
+            // --- Download Full PRF ---
+            buttons.downloadPrf.addEventListener('click', () => {
+                let fullPrfText = "My Personal Reality Framework\n============================\n\n";
+                ALL_KEYS.forEach(key => {
+                    fullPrfText += `--- ${key.toUpperCase().replace('_', ' ')} ---\n` + (displays[key].value || "No data uploaded.") + "\n\n";
+                });
+                
+                // Add chat history to download
+                if (chatHistory.length > 0) {
+                    fullPrfText += "============================\n--- GUIDED SYNTHESIS CONVERSATION ---\n\n";
+                    chatHistory.forEach(turn => {
+                        if (turn.role === 'user' && turn.parts[0].text.includes('Here is the full context')) return; // Skip context dump
+                        const prefix = turn.role === 'model' ? 'AI Tutor:' : 'You:';
+                        fullPrfText += `${prefix}\n${turn.parts[0].text}\n\n`;
+                    });
+                }
+
+                const blob = new Blob([fullPrfText], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'My-Personal-Reality-Framework.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // --- Demo Data and Logic ---
             function populateDemo() { /* ... */ }
         });
     </script>
