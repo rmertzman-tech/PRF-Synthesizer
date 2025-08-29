@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRF Synthesizer & Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -382,8 +382,8 @@
                 
                 toast.className = `fixed top-5 left-1/2 -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300`;
                 document.body.appendChild(toast);
-                setTimeout(() => toast.style.opacity = '0', 2700);
-                setTimeout(() => toast.remove(), 3000);
+                setTimeout(() => toast.style.opacity = '0', 3700);
+                setTimeout(() => toast.remove(), 4000);
             }
 
             // --- Load Data Logic ---
@@ -502,8 +502,7 @@
                     return;
                 }
                 
-                const startButton = buttons.startSynthesis;
-                startButton.classList.add('hidden');
+                buttons.startSynthesis.classList.add('hidden');
                 
                 chatHistory = []; 
                 chatContainer.innerHTML = ''; 
@@ -562,12 +561,20 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: chatHistory })
                     });
-
-                    if (!response.ok) { throw new Error(`API request failed with status ${response.status}`); }
-
+                    
                     const result = await response.json();
+
+                    if (!response.ok) {
+                         const errorText = result.error ? result.error.message : `API request failed with status ${response.status}`;
+                         throw new Error(errorText);
+                    }
+
                     if (!result.candidates || result.candidates.length === 0) {
-                        throw new Error('No content returned from API. The response may have been blocked.');
+                        if (result.promptFeedback && result.promptFeedback.blockReason) {
+                            throw new Error(`Prompt blocked for safety reason: ${result.promptFeedback.blockReason}`);
+                        } else {
+                            throw new Error('No content returned from API. The response may have been blocked due to safety filters.');
+                        }
                     }
                     const aiText = result.candidates[0].content.parts[0].text;
                     
@@ -576,7 +583,13 @@
 
                 } catch (error) {
                     console.error('AI Chat Error:', error);
-                    addMessageToChat('model', 'An error occurred. Please check your API key and try again. It may be invalid or have restrictions.');
+                    let errorMessage = 'An error occurred. Please check your API key and try again. It may be invalid or have restrictions.';
+                    if (error.message.toLowerCase().includes('blocked')) {
+                        errorMessage = 'The AI\'s response was blocked, likely due to safety filters. This can happen with complex topics. Please try rephrasing your last message or starting a new synthesis.';
+                    } else if (error.message.toLowerCase().includes('api key')) {
+                        errorMessage = 'API Key Error: The provided key is likely invalid or not configured correctly. Please double-check the key and try again.';
+                    }
+                    addMessageToChat('model', errorMessage);
                 } finally {
                     sendBtnText.classList.remove('hidden');
                     chatSpinner.classList.add('hidden');
@@ -608,7 +621,6 @@
                 document.body.removeChild(link);
             });
             
-            // --- THIS IS THE CRITICAL FIX: The full demoData object is now included ---
             const demoData = {
                 mandela: {
                     name: "Nelson Mandela",
