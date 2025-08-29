@@ -555,7 +555,7 @@
                 }
 
                 try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -565,7 +565,7 @@
                     const result = await response.json();
 
                     if (!response.ok) {
-                         const errorText = result.error ? result.error.message : `API request failed with status ${response.status}`;
+                         const errorText = result.error ? `API Error: ${result.error.message}` : `API request failed with status ${response.status}. Please check browser console for details.`;
                          throw new Error(errorText);
                     }
 
