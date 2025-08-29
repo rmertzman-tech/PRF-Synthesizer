@@ -102,6 +102,7 @@
         .btn-link:hover {
             color: #4338ca;
         }
+        /* Focus Mode Styles */
         .review-grid {
             display: flex;
             flex-wrap: wrap;
@@ -190,6 +191,38 @@
             align-self: flex-end;
             border-bottom-right-radius: 0;
         }
+        /* Dropdown Styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f1f1f1;
+            min-width: 220px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            right: 0;
+        }
+        .dropdown-content button {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+        }
+        .dropdown-content button:hover {
+            background-color: #ddd;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4 md:p-8">
@@ -203,7 +236,7 @@
                 <p class="text-gray-600 mt-4 mb-8">The central hub for analyzing and integrating your personal insights.</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <button id="start-here-btn" class="btn btn-primary px-8 py-3 rounded-lg font-semibold text-lg">Start Here</button>
-                    <button id="view-demo-btn" class="btn btn-secondary px-8 py-3 rounded-lg font-semibold text-lg">View Demos</button>
+                    <button id="view-demos-btn" class="btn btn-secondary px-8 py-3 rounded-lg font-semibold text-lg">View Demos</button>
                 </div>
             </div>
         </div>
@@ -216,7 +249,7 @@
                 <div class="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md my-6">
                     <h3 class="font-bold">How to Use This Tool:</h3>
                     <ul class="list-disc list-inside mt-2 space-y-1">
-                        <li>Use the <strong>"Load Data from Explorers"</strong> button for a quick way to import your saved work.</li>
+                        <li>Use the <strong>"Load Data"</strong> dropdown for a quick way to import your saved work or to explore a pre-populated demo.</li>
                         <li>Alternatively, you can <strong>upload your .txt files</strong> from each explorer.</li>
                         <li>Use the <strong>expand icon</strong> in the corner of a review box for a larger "Focus Mode" view.</li>
                         <li>Engage in a <strong>Guided Synthesis</strong> with the AI to connect your ideas step-by-step.</li>
@@ -233,12 +266,26 @@
         <div id="main-app" class="hidden">
             <div class="mb-4 flex justify-between items-center">
                 <button id="back-to-start-from-main-btn" class="btn btn-link">← Back to Start</button>
-                <button id="load-data-btn" class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load Data from Explorers</button>
+                <div id="load-data-container" class="dropdown">
+                    <button class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load Data</button>
+                    <div id="load-data-dropdown" class="dropdown-content">
+                        <button id="load-my-data-btn">Load My Saved Data</button>
+                        <hr>
+                        <button data-demo="mandela">Demo: Nelson Mandela</button>
+                        <button data-demo="carson">Demo: Rachel Carson</button>
+                        <button data-demo="dali">Demo: Salvador Dalí</button>
+                        <button data-demo="weiwei">Demo: Ai Weiwei</button>
+                        <button data-demo="day">Demo: Dorothy Day</button>
+                        <button data-demo="maathai">Demo: Wangari Maathai</button>
+                        <button data-demo="haugen">Demo: Frances Haugen</button>
+                        <button data-demo="boisjoly">Demo: Roger Boisjoly</button>
+                    </div>
+                </div>
             </div>
 
             <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
-                <p class="text-gray-600 mt-2">Load your saved work, or upload your .txt files to begin.</p>
+                <h1 id="main-header" class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
+                <p id="main-subheader" class="text-gray-600 mt-2">Load your saved work, or upload your .txt files to begin.</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -271,7 +318,7 @@
                             <div class="review-box" data-key="future_pull"><button class="expand-btn"></button><textarea id="future_pull-display" class="w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="Future Pull..."></textarea></div>
                         </div>
                     </div>
-                    <!-- UPDATED: Guided Synthesis Section -->
+                    <!-- Guided Synthesis Section -->
                     <div class="card p-6">
                         <h2 class="text-xl font-bold mb-4">3. Guided Synthesis</h2>
                         <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
@@ -303,39 +350,21 @@
                 </div>
             </div>
         </div>
-
-        <!-- NEW: Demo Selection Screen -->
-        <div id="demo-selection-screen" class="hidden screen text-center max-w-2xl mx-auto">
-            <div class="card p-8 md:p-12">
-                <button id="back-to-start-from-demo-select-btn" class="btn btn-link absolute top-4 left-4">← Back to Start</button>
-                <h2 class="text-3xl font-bold mb-6">Choose a Demo</h2>
-                <p class="text-gray-600 mb-8">Explore a pre-populated PRF to see the depth of reflection this project makes possible. Choose a perspective that interests you:</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button data-demo="mandela" class="btn btn-secondary p-4 rounded-lg">The Statesman: Nelson Mandela</button>
-                    <button data-demo="carson" class="btn btn-secondary p-4 rounded-lg">The Environmentalist: Rachel Carson</button>
-                    <button data-demo="day" class="btn btn-secondary p-4 rounded-lg">The Activist: Dorothy Day</button>
-                    <button data-demo="maathai" class="btn btn-secondary p-4 rounded-lg">The Social Ecologist: Wangari Maathai</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Demo Display Screen -->
-        <div id="demo-screen" class="hidden screen">
-            <!-- Demo Content is loaded dynamically by JS -->
-        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Elements ---
-            const screens = { start: document.getElementById('start-screen'), explanation: document.getElementById('explanation-screen'), main: document.getElementById('main-app'), demoSelect: document.getElementById('demo-selection-screen'), demo: document.getElementById('demo-screen'), };
+            const screens = { 
+                start: document.getElementById('start-screen'), 
+                explanation: document.getElementById('explanation-screen'), 
+                main: document.getElementById('main-app'),
+            };
             const buttons = {
                 startHere: document.getElementById('start-here-btn'),
+                viewDemo: document.getElementById('view-demos-btn'), // This button exists now
                 continueToApp: document.getElementById('continue-to-app-btn'),
-                viewDemo: document.getElementById('view-demo-btn'),
                 backToStartFromMain: document.getElementById('back-to-start-from-main-btn'),
-                backToStartFromDemoSelect: document.getElementById('back-to-start-from-demo-select-btn'),
-                loadData: document.getElementById('load-data-btn'),
                 downloadPrf: document.getElementById('download-prf-btn'),
                 saveKey: document.getElementById('save-key-btn'),
                 startSynthesis: document.getElementById('start-synthesis-btn'),
@@ -360,6 +389,10 @@
             const chatInput = document.getElementById('chat-input');
             const sendBtnText = document.getElementById('send-btn-text');
             const chatSpinner = document.getElementById('chat-spinner');
+            const mainHeader = document.getElementById('main-header');
+            const mainSubheader = document.getElementById('main-subheader');
+            const loadDataDropdown = document.getElementById('load-data-dropdown');
+            const loadDataContainer = document.getElementById('load-data-container');
 
             // --- Storage Keys ---
             const DATA_KEYS = { beliefs: 'prf_beliefs_data', rules: 'prf_rules_data', ontology: 'prf_ontology_data', authenticity: 'prf_authenticity_data', assembly_history: 'prf_assembly_history_data', future_pull: 'prf_future_pull_data' };
@@ -370,11 +403,20 @@
             if (savedApiKey) apiKeyInput.value = savedApiKey;
 
             // --- Screen Navigation ---
-            buttons.startHere.addEventListener('click', () => { screens.start.classList.add('hidden'); screens.explanation.classList.remove('hidden'); });
-            buttons.continueToApp.addEventListener('click', () => { screens.explanation.classList.add('hidden'); screens.main.classList.remove('hidden'); screens.main.classList.add('screen'); });
-            buttons.viewDemo.addEventListener('click', () => { screens.start.classList.add('hidden'); screens.demoSelect.classList.remove('hidden'); });
-            buttons.backToStartFromMain.addEventListener('click', () => { screens.main.classList.add('hidden'); screens.start.classList.remove('hidden'); });
-            buttons.backToStartFromDemoSelect.addEventListener('click', () => { screens.demoSelect.classList.add('hidden'); screens.start.classList.remove('hidden'); });
+            buttons.startHere.addEventListener('click', () => { 
+                screens.start.classList.add('hidden'); 
+                screens.explanation.classList.remove('hidden'); 
+            });
+            buttons.continueToApp.addEventListener('click', () => { 
+                screens.explanation.classList.add('hidden'); 
+                screens.main.classList.remove('hidden'); 
+                screens.main.classList.add('screen'); 
+            });
+            buttons.backToStartFromMain.addEventListener('click', () => { 
+                screens.main.classList.add('hidden'); 
+                screens.start.classList.remove('hidden'); 
+                resetToUserMode(); 
+            });
 
             // --- Non-blocking message toast ---
             function showMessage(message, type = 'info') {
@@ -390,8 +432,16 @@
                 setTimeout(() => toast.remove(), 3000);
             }
 
-            // --- Load Data from Local Storage ---
-            buttons.loadData.addEventListener('click', () => {
+            // --- Load Data Logic ---
+            loadDataDropdown.addEventListener('click', (e) => {
+                if (e.target.id === 'load-my-data-btn') {
+                    loadMyData();
+                } else if (e.target.dataset.demo) {
+                    populateDemo(e.target.dataset.demo);
+                }
+            });
+
+            function loadMyData() {
                 let loadedCount = 0;
                 Object.keys(DATA_KEYS).forEach(key => {
                     const data = localStorage.getItem(DATA_KEYS[key]);
@@ -409,7 +459,7 @@
                 } else {
                     showMessage('No data found in browser storage. Please use the "Save to Synthesizer" button in the explorer apps first.');
                 }
-            });
+            }
 
             // --- File Handling Logic ---
             const handleFile = (file, key) => {
@@ -493,8 +543,9 @@
 
             // --- Guided Synthesis Chat Logic ---
             let chatHistory = [];
+            let isDemoMode = false;
             
-            buttons.startSynthesis.addEventListener('click', startConversation);
+            buttons.startSynthesis.addEventListener('click', () => startConversation(false));
             buttons.sendChat.addEventListener('click', handleUserResponse);
             chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -503,19 +554,29 @@
                 }
             });
             
-            async function startConversation() {
+            async function startConversation(isDemo = false, demoData = null) {
+                isDemoMode = isDemo;
+                
                 const apiKey = localStorage.getItem(API_KEY);
                 if (!apiKey) {
                     showMessage('Please save your API key before starting.', 'error');
                     return;
                 }
                 
-                buttons.startSynthesis.classList.add('hidden');
-                chatHistory = []; // Reset history
-                chatContainer.innerHTML = ''; // Clear chat
+                const startButton = buttons.startSynthesis;
+                startButton.classList.add('hidden');
                 
-                const initialPrompt = `You are a helpful philosophy tutor. A student has provided reflections on their Personal Reality Framework across six key areas. Your task is to begin a "Guided Synthesis" conversation with them. Start by providing an initial analysis of their work based on the provided data. Then, ask an open-ended question to get the conversation started. Here is their data:\n\n` +
-                ALL_KEYS.map(key => `--- ${key.toUpperCase().replace('_', ' ')} ---\n${displays[key].value || "No data provided."}`).join('\n\n');
+                chatHistory = []; 
+                chatContainer.innerHTML = ''; 
+                
+                let dataPrompt;
+                if(isDemo) {
+                    dataPrompt = ALL_KEYS.map(key => `--- ${key.toUpperCase().replace('_', ' ')} ---\n${demoData[key] || "No data provided."}`).join('\n\n');
+                } else {
+                    dataPrompt = ALL_KEYS.map(key => `--- ${key.toUpperCase().replace('_', ' ')} ---\n${displays[key].value || "No data provided."}`).join('\n\n');
+                }
+
+                const initialPrompt = `You are a helpful philosophy tutor. A student has provided reflections on their Personal Reality Framework across six key areas. Your task is to begin a "Guided Synthesis" conversation with them. Start by providing an initial analysis of their work based on the provided data. Then, ask an open-ended question to get the conversation started. Here is their data:\n\n` + dataPrompt;
                 
                 await generateAiResponse(initialPrompt);
                 chatInputArea.classList.remove('hidden');
@@ -535,7 +596,7 @@
                 messageDiv.className = `chat-message ${role === 'user' ? 'user-message' : 'ai-message'}`;
                 messageDiv.textContent = text;
                 chatContainer.appendChild(messageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             }
 
             async function generateAiResponse(initialPrompt = null) {
@@ -584,9 +645,9 @@
                     fullPrfText += `--- ${key.toUpperCase().replace('_', ' ')} ---\n` + (displays[key].value || "No data uploaded.") + "\n\n";
                 });
                 
-                if (chatHistory.length > 0) {
+                if (chatHistory.length > 0 && !isDemoMode) {
                     fullPrfText += "============================\n--- GUIDED SYNTHESIS CONVERSATION ---\n\n";
-                    chatHistory.slice(1).forEach(message => { // Skip the initial system prompt
+                    chatHistory.slice(1).forEach(message => {
                         const speaker = message.role === 'user' ? 'Me' : 'AI Tutor';
                         fullPrfText += `[${speaker}]:\n${message.parts[0].text}\n\n`;
                     });
@@ -600,11 +661,174 @@
                 link.click();
                 document.body.removeChild(link);
             });
+            
+            // --- THIS IS THE CRITICAL FIX: The full demoData object is now included ---
+            const demoData = {
+                mandela: {
+                    name: "Nelson Mandela",
+                    beliefs: `(File: General-Beliefs-Summary.txt)\n--- Belief 1: The Nature of Reality ---\nI believe reality is fundamentally social and interconnected. No person is an island. Our humanity is bound up in the humanity of others. To deny others their humanity is to diminish our own. The spiritual dimension is not separate from the physical; it is found in the courage, compassion, and resilience of people fighting for a just world.\n\n(File: End-of-Apartheid-Beliefs-Summary.txt)\n--- Present Belief ---\nRight now, my most central belief about this situation with "the end of apartheid" is that our oppressors are also victims of an inhuman system. They are not monsters, but men who have been warped by fear and prejudice. To achieve a lasting peace, we must believe in their capacity to change, even when all evidence is to the contrary. This belief in a shared, redeemable humanity is the only foundation upon which a new nation can be built.`,
+                    rules: `(File: General-Rules-Summary.txt)\n--- Rule 2: Self-Made Rules ---\nA rule I created for myself is to find the good in even my greatest enemies. During my years in prison, I learned that if I hated my captors, they would have truly imprisoned me. My freedom began the moment I decided not to be a victim of bitterness. This rule—to seek understanding over judgment—became my primary tool for survival and, later, for negotiation.\n\n(File: End-of-Apartheid-Rules-Summary.txt)\n--- Primary Rule ---\nThe main rule I am trying to follow right now in "the end of apartheid" is that the process of reconciliation is as important as the outcome. We cannot build a democratic future using the tools of oppression. This means negotiating with our enemies, even when it is painful. It means choosing restorative justice over retribution. The new South Africa must be for everyone, including those who fought against it.`,
+                    ontology: `(File: General-Ontology-Summary.txt)\n--- Identity & Change ---\nPersonal identity is not fixed. It is forged in the crucible of struggle. I went into prison a hot-headed young man and emerged a patient leader. The core of who I am—my commitment to justice—did not change, but my understanding of how to achieve it was transformed. We are not defined by our past mistakes, but by our capacity to learn from them and grow.\n\n(File: End-of-Apartheid-Ontology-Summary.txt)\n--- Key 'Things' ---\nIn this situation with "the end of apartheid", the most important 'things' that exist are not just people and laws, but also symbols, memories, and fears. The 'real' battle is not just for political power, but for the narrative of our country. Is South Africa a story of racial domination, or is it a story of a shared future? The most real things we are building are trust and a new national identity.`,
+                    authenticity: `(File: General-Authenticity-Summary.txt)\n--- Internal vs. External Self ---\nFor many years, there was a great difference. The world saw me as a symbol, a revolutionary. But on the inside, I was a man who missed his family, who felt fear and doubt. To be a leader, I had to project an image of unwavering strength. But true authenticity, I learned, is not about having no fear; it is about acting in service of your values despite your fear.\n\n(File: End-of-Apartheid-Authenticity-Summary.txt)\n--- The 'Mask' ---\nIn the situation with "the end of apartheid," the 'mask' I had to wear was one of absolute certainty and patience, especially during negotiations. Internally, I felt immense pressure and frustration. But to show that would have been a strategic disaster. My authentic self is the man committed to a free South Africa; the calm negotiator was the role I had to play to be true to that deepest self. It was a necessary performance to achieve an authentic goal.`,
+                    assembly_history: `(File: Formative Narrative)\n--- The Rivonia Trial ---\nStanding in the dock in 1964, facing the death penalty, was the moment my life's path was irrevocably set. I had to articulate not just a legal defense, but the moral and philosophical foundation of our struggle. In preparing my speech, I had to synthesize everything I had learned from my upbringing in the Thembu royal house, my legal training, and my years as an activist. It forced me to consciously construct the narrative of my life and our movement. That trial transformed me from a participant into a living symbol of the cause, a role I would have to inhabit for the rest of my life. The 27 years in prison that followed were not a diversion from my life, but the crucible in which that constructed identity was tested and forged into something resilient.`,
+                    future_pull: `(File: Legacy Construction)\n--- A Rainbow Nation ---\nMy vision for the future, the 'pull' that guided my actions, was always the creation of a "Rainbow Nation." This was not just a poetic phrase; it was a specific, desired end-state. It meant building a country where people of all races could live together in peace and equality, without bitterness or recrimination. This future goal created present constraints: it meant that I could not advocate for vengeance, I had to negotiate with my former jailers, and I had to publicly forgive those who had committed terrible acts. Every difficult compromise was measured against this single question: "Does this action move us closer to the Rainbow Nation?" It was the ultimate criterion for my decisions.`
+                },
+                carson: {
+                    name: "Rachel Carson",
+                    beliefs: "My core belief is that humanity is not separate from the natural world, but a part of it. We are subject to the same ecological laws as every other living creature. The modern belief that we can dominate and control nature without consequence is a dangerous delusion. We are poisoning the very systems that sustain us, and our survival depends on recognizing our interconnectedness with the web of life.",
+                    rules: "My primary rule is to bear witness to the truth, no matter how inconvenient or unpopular. This means my work must be based on meticulous, unimpeachable scientific evidence. A second rule is to communicate that truth in a way that is accessible and emotionally resonant to the public. Science cannot remain in the ivory tower; it must be a tool for public understanding and democratic action.",
+                    ontology: "The most 'real' things in the world are not human constructs like economies or political systems, but the intricate relationships and cycles of the natural world. These ecological systems are the fundamental reality upon which all human endeavors are built. To ignore this primary reality in favor of our own abstract models is the height of folly. A pesticide is not just a chemical; it is a disruption of a complex, ancient system.",
+                    authenticity: "Authenticity for me is the alignment of my scientific integrity with my moral courage. For years, I was a respected but quiet government scientist. But my knowledge of the dangers of pesticides compelled me to speak out, even though it meant facing immense personal and professional attacks. To have remained silent would have been a betrayal of my deepest self—the scientist who sees the evidence and the human being who feels a sense of wonder and responsibility for the natural world.",
+                    assembly_history: "My assembly history was built on a dual foundation: a deep, almost mystical love for the ocean and its creatures, instilled in me from childhood, and a rigorous training in biology and scientific writing. These two streams—the poetic and the empirical—were often seen as separate, but for me, they were always intertwined. The challenge of writing 'Silent Spring' was the ultimate integration of these two parts of myself: using the precise language of science to defend the things I loved with all my heart.",
+                    future_pull: "My 'future pull' was the vision of a world where humanity lives in harmony with the natural environment. I was not just trying to ban a few chemicals; I was trying to spark a fundamental shift in consciousness. This goal required me to become something I never expected to be: a public figure and a catalyst for a new social movement. Every word I wrote and every testimony I gave was pulled forward by the desire to create a future where the beauty and complexity of the natural world would be protected for generations to come."
+                },
+                dali: {
+                    name: "Salvador Dalí",
+                    beliefs: "I believe that the only difference between me and a madman is that I am not mad. My core belief is that the irrational and the subconscious are not chaotic voids, but are instead a second, parallel reality with its own precise structure, logic, and laws. The 'real' world that most people see is a flimsy curtain. True reality is found in the 'super-rational' landscape of dreams, desires, and paranoia. My work is not fantasy; it is a meticulously rendered report from this other world.",
+                    rules: "My primary rule is the 'paranoiac-critical method.' This is not a vague inspiration, but a systematic process. I must cultivate a state of controlled madness, allowing my mind to see irrational connections between objects, and then I must use the most academic, classical, and rigorous painting techniques to render those connections with the objective precision of a photograph. One must be a madman, but a disciplined one.",
+                    ontology: "The most fundamental categories of being are hard and soft, rigid and fluid. The 'persistence of memory' is not an abstract idea; it is a soft, melting clock. The ego is not a solid fortress; it is a fragile egg. My ontology is based on these material, psychological states. Time, identity, desire—these are not concepts, they are tangible things that can be twisted, transformed, and rendered with absolute realism.",
+                    authenticity: "Authenticity is the perfect, systematic construction of an external self that is in complete alignment with one's deepest, most obsessive internal reality. The public persona of 'Dalí'—the mustache, the pronouncements, the antics—is not a mask that hides my true self. It is the architectural scaffolding that makes my true self visible. To be authentic is not to be 'natural'; it is to achieve a state of sublime and total artifice.",
+                    assembly_history: "My identity was forged by the ghost of my dead brother, who was also named Salvador. I was, from birth, a copy, a replacement. This created a fundamental 'identity doubling' in my assembly history. I was never a single, unified self, but always a being in dialogue with an other. This trauma became the engine of my art. My classical training gave me the tools to master the external world, while my encounter with Freud gave me a system for mapping the internal one. My entire life has been a project of integrating these two realities.",
+                    future_pull: "My 'future pull' is not merely fame, but immortality. I am not painting for critics or for the public; I am painting for history. This requires that every action, every painting, every public statement be a calculated step in the construction of the eternal myth of Dalí. This future goal of becoming a permanent fixture in the artistic pantheon creates the present constraint of absolute, uncompromising excellence and innovation. I must always be more Dalí than anyone expects."
+                },
+                weiwei: {
+                    name: "Ai Weiwei",
+                    beliefs: "I believe that an artist must also be an activist, and an activist must also be an artist. To separate the two is a moral failure. My belief is that art is not a decorative object, but a tool for social and political inquiry. It is a way of asking questions that power does not want asked. A simple object, like a sunflower seed or a child's backpack, can become a powerful weapon when placed in the right context. The purpose of art is to challenge authority and to give voice to the voiceless.",
+                    rules: "My primary rule is to tell the truth, regardless of the consequences. This means using my art to document reality, from the names of children who died in the Sichuan earthquake to the daily life of a political dissident under house arrest. A second rule is to use the tools of the powerful against them. If they use propaganda, I will use it better. If they use surveillance, I will turn the camera on them and on myself, making my life a work of public art and protest.",
+                    ontology: "The most 'real' things in the world are not governments or laws, but individual human lives and their stories. A government is an abstract idea, but a schoolgirl crushed under a poorly constructed building is an undeniable reality. My work is an attempt to make these individual realities visible, to force them into the public consciousness. I often work with thousands of identical objects, like bicycles or stools, to represent the tension between the individual and the overwhelming power of the collective state.",
+                    authenticity: "Authenticity for me is the complete eradication of the line between my life and my art. When I was secretly detained by the state for 81 days, I could not make art. But my life itself became the material. After my release, I created a work that was a perfect, half-scale replica of the room I was held in, complete with models of myself and my captors. To be authentic is to live your protest, to make your own freedom—or lack thereof—the subject of your work. There can be no separation.",
+                    assembly_history: "My assembly history was shaped by my father, a famous poet who was exiled to a labor camp during the Cultural Revolution. I grew up seeing the brutal reality of what the state can do to an individual. But I also learned from him that art and writing were forms of survival, ways of maintaining one's humanity in the face of dehumanization. My time in New York in the 1980s was also critical. I saw how artists like Warhol and Duchamp could use everyday objects to ask profound questions. I combined my father's political dissidence with their conceptual strategies.",
+                    future_pull: "My 'future pull' is a vision of a more open and transparent China, a society that is not afraid of its own artists and thinkers. This goal requires me to constantly test the boundaries of what is permissible. Every new work of art, every tweet, every interview is a calculated action designed to push those boundaries just a little bit further. I am not trying to be a martyr; I am trying to create a future space where artists and citizens like me can speak freely without fear. This vision of the future is what gives me the courage to act in the present."
+                },
+                day: {
+                    name: "Dorothy Day",
+                    beliefs: "My core belief is in the literal, radical truth of the Gospels. When Jesus said, 'whatever you did for one of the least of these brothers and sisters of mine, you did for me,' he was not speaking in metaphors. I believe that every person, especially the poor, the homeless, and the marginalized, is the living presence of Christ on Earth. Our work is not charity; it is a direct encounter with God.",
+                    rules: "The primary rule of the Catholic Worker is voluntary poverty and the daily practice of the Works of Mercy. We must live with the poor, not just serve them from a distance. A second rule is a commitment to absolute pacifism and nonviolence. We do not believe in a 'just war.' We believe that the only way to overcome violence is with love, even if it means personal suffering or imprisonment for our beliefs.",
+                    ontology: "The most real and fundamental entity in the universe is the Mystical Body of Christ, a spiritual community that connects all people. The divisions that the world sees—between rich and poor, between nations, between races—are illusions. The underlying reality is a profound spiritual unity. Our houses of hospitality are not just shelters; they are attempts to create small, living models of this true reality in a world that has forgotten it.",
+                    authenticity: "Authenticity is the daily struggle to close the gap between what I believe and how I live. It is easy to write about poverty and justice; it is much harder to live it. Authenticity is found in the small, unglamorous, and often exhausting work of running a soup kitchen, changing beds, and listening to the stories of the broken. It is the practice of 'holy foolishness'—living in a way that seems insane to the world, but is in perfect alignment with the radical demands of my faith.",
+                    assembly_history: "My assembly history was one of radical conversion. I began as a bohemian, a writer, a political radical, and an anarchist. I had a common-law marriage and an abortion. But I always felt a deep spiritual longing, a pull towards the transcendent. My conversion to Catholicism was not a rejection of my commitment to social justice, but its ultimate fulfillment. The challenge was to integrate my radical politics with my newfound faith, to create a form of Catholicism that was not conservative and complacent, but was a revolutionary force for the poor. The Catholic Worker movement was the answer.",
+                    future_pull: "My 'future pull' was always the creation of 'a new society within the shell of the old.' I was not trying to win political power or reform existing institutions. I was trying to build a parallel social order based on the principles of the Gospel. This vision of a decentralized, faith-based, and communitarian society is what guided every decision. It's why we started farms, why we refused to pay taxes for war, and why we opened our doors to anyone in need. We were building the future we wanted to live in, one act of love at a time."
+                },
+                maathai: {
+                    name: "Wangari Maathai",
+                    beliefs: "I believe that peace on earth depends on our ability to secure our living environment. The health of our land and the health of our society are not two different things; they are inextricably linked. A degraded environment leads to poverty, conflict, and a loss of dignity. But when we heal the earth, we also heal ourselves and our communities. A tree is not just a tree; it is a symbol of peace and hope.",
+                    rules: "My primary rule is to think globally and act locally. Grand speeches about environmentalism mean nothing without concrete action. Our rule in the Green Belt Movement is simple: plant trees. A second rule is that sustainable development must be led by women. Women are the primary caretakers of the land in my country. When you empower them to restore their environment, you are creating a powerful force for social and political change.",
+                    ontology: "The most real things are not the abstract lines on a map that define a country, but the watersheds, the forests, and the soil that sustain the people who live there. A nation is not its government; a nation is its land and its people. When the land is sick, the nation is sick. My work is based on this simple, ecological ontology. Political problems are often, at their root, ecological problems.",
+                    authenticity: "Authenticity is about having the courage to connect your personal values to public action, even when it is dangerous. I was trained as a scientist, a biologist. I could have had a quiet and comfortable career in academia. But I saw the forests of my country being destroyed, and I saw how that destruction was hurting the women in rural areas. To be authentic, I had to leave the safety of the university and start a movement. I was told that a woman, especially an educated woman, should not be digging in the dirt. But for me, digging in the dirt was the most authentic act I could perform.",
+                    assembly_history: "My assembly history is a story of two worlds. I grew up in a small village in rural Kenya, deeply connected to the land and the traditions of my people. Then, through education, I traveled to America and became a scientist, earning my Ph.D. in biology. For a time, these two worlds felt separate. The Green Belt Movement was the integration of these two halves of my identity. It was the application of my modern scientific training to solve the traditional problems of my community. It was about using the power of my education to restore the wisdom of my ancestors.",
+                    future_pull: "My 'future pull' was a vision of a green and peaceful Africa. I saw a future where the hills of my country would be covered in trees again, where women would have control over their own resources, and where the government would be accountable to its people and its land. This vision is what kept me going through years of harassment, imprisonment, and political opposition. Every tree we planted was an act of faith in that future. We were not just planting trees; we were planting the seeds of a new democracy."
+                },
+                haugen: {
+                    name: "Frances Haugen",
+                    beliefs: "I believe that the core of the problem with social media is not the people using it, but the algorithmic systems that are designed to maximize engagement at any cost. My belief is that these platforms are not neutral town squares; they are 'engagement-based ranking' systems that have been shown to systematically amplify misinformation, hate speech, and societal division because that is what keeps users on the platform. We are being harmed by a product, not by a failure of our own character.",
+                    rules: "My primary rule is that data and evidence must drive the conversation. The debates about social media are often based on anecdotes and political opinions. My rule was to meticulously collect the internal documents—the company's own research—that provided irrefutable proof of the harms being caused. A second rule is to work within the system for as long as possible. I did not set out to be a whistleblower. I tried to raise these issues internally for years. Leaking the documents was a last resort, taken only when it became clear that the company was unwilling to act on its own findings.",
+                    ontology: "The most 'real' and powerful actors in our society are no longer just people or governments; they are algorithms. These complex, opaque systems are shaping the information we see, the opinions we form, and the way our societies function. We cannot understand the modern world without understanding that these algorithms are a fundamental part of our reality. My work is an attempt to make this new reality visible and subject to democratic oversight.",
+                    authenticity: "Authenticity for me was about reconciling the difference between the company's public statements and the internal reality I was seeing in the data. Facebook was publicly claiming to be making progress on safety, while its own research showed that its systems were making things worse. To be authentic, I had to act on the truth I knew, even if it meant risking my career. To have remained silent would have been a betrayal of my duties as an engineer and as a citizen. It was a choice between being a good employee and being a good person.",
+                    assembly_history: "My assembly history is that of a classic 'systems thinker.' I have a degree in electrical and computer engineering and an MBA from Harvard. I've spent my career working at tech companies like Google, Pinterest, and Yelp, always focused on algorithmic product design. I was not a political activist; I was a technical problem-solver. But this background gave me the unique ability to understand the complex systems at the heart of Facebook's problems. My decision to act was not based on ideology, but on a data-driven conclusion that the system was broken and causing significant harm.",
+                    future_pull: "My 'future pull' is a vision of a safer, more responsible, and more transparent digital world. I am not trying to destroy Facebook; I am trying to create a future where social media platforms are subject to the same kind of regulation and oversight as other industries that can cause public harm, like cars or tobacco. This vision requires the creation of new institutions, like a federal agency dedicated to digital products. Every document I released and every testimony I give is aimed at building the public and political will to create that future."
+                },
+                boisjoly: {
+                    name: "Roger Boisjoly",
+                    beliefs: "I believe that the first duty of an engineer is to the truth and to public safety, above any loyalty to their employer. My core belief is that engineering is not just a technical profession; it is a moral one. We are entrusted with the power to create things that can have life-or-death consequences, and that trust requires an absolute commitment to integrity. Data is not just numbers; it is a representation of a physical reality that does not care about launch schedules or political pressure.",
+                    rules: "My primary rule was to follow the data, wherever it led. The data on the O-rings in cold weather was clear and unambiguous: it was unsafe to launch. A second rule is to communicate risks clearly and forcefully up the chain of command. I did not just raise a concern; I wrote a detailed memo, I presented my findings, I argued with my managers. I followed every procedure available to me to make the danger known.",
+                    ontology: "In an engineering context, the most real things are not managers' opinions or marketing deadlines; the most real things are the laws of physics and the material properties of your components. The foam on the external tank, the O-rings on the solid rocket boosters—these were not abstract concepts. They were physical objects with known failure points. The disaster happened because the reality of the engineering data was ignored in favor of the socially constructed reality of a launch schedule.",
+                    authenticity: "Authenticity for me was about upholding my identity as an engineer. An engineer who ignores data is not an engineer; they are a bureaucrat. When my managers decided to overrule the engineers and approve the launch, they created a situation where I could no longer be authentic to my professional identity and remain silent. My decision to testify before the presidential commission was not a choice to become a whistleblower; it was a choice to remain an engineer. It was the only way to be true to the oath I had taken.",
+                    assembly_history: "My assembly history was that of a working engineer. I had spent decades in the aerospace industry, working on complex projects from aircraft brakes to the lunar module. I was trained to identify risks, to test components, and to trust the data. I was a company man, a team player. But my entire career was built on a foundation of scientific and technical rationality. The Challenger situation was a crisis because it forced a conflict between my identity as a loyal employee and my more fundamental identity as a rational engineer. The engineer won.",
+                    future_pull: "My 'future pull' became the mission to educate future engineers about the importance of ethical responsibility. After the disaster, I traveled the country, speaking at universities about my experience. I was not trying to become famous; I was trying to create a future where no engineer would ever have to go through what I went through. My goal was to reinforce the professional norms and ethical standards of my profession, to ensure that the next generation of engineers would have the courage and the institutional support to speak up when they see something that is unsafe. My legacy is not the disaster, but the lessons we learned from it."
+                }
+            };
+            
+            // This is the function that loads the data. 
+            function populateDemo(key) {
+                const data = demoData[key];
+                if (!data) {
+                    console.error("Demo data not found for key:", key);
+                    return;
+                };
 
-            // --- Demo Data and Logic ---
-            const demoData = { /* ... Demo data objects ... */ };
-            screens.demoSelect.addEventListener('click', (e) => { /* ... */ });
-            function populateDemo(key) { /* ... */ }
+                resetToUserMode(); // Clear existing user data first
+
+                mainHeader.textContent = `PRF Synthesizer (Demo: ${data.name})`;
+                mainSubheader.textContent = `This is a pre-populated example. You can interact with the AI below.`;
+                
+                ALL_KEYS.forEach(k => {
+                    if(data[k]) {
+                        displays[k].value = data[k];
+                        displays[k].readOnly = true;
+                        uploadBoxes[k].classList.add('filled', 'pointer-events-none');
+                        fileNames[k].textContent = 'Demo Data';
+                        clearButtons[k].classList.add('hidden');
+                    }
+                });
+                
+                loadDataContainer.classList.add('hidden');
+                buttons.downloadPrf.classList.add('hidden');
+                
+                startConversation(true, data);
+            }
+
+            function resetToUserMode() {
+                mainHeader.textContent = 'Personal Reality Framework (PRF) Synthesizer';
+                mainSubheader.textContent = 'Load your saved work, or upload your .txt files to begin.';
+
+                ALL_KEYS.forEach(key => {
+                    displays[key].value = '';
+                    displays[key].readOnly = false;
+                    uploadBoxes[key].classList.remove('filled', 'pointer-events-none');
+                    fileNames[key].textContent = 'Click or drag file(s) here';
+                    fileNames[key].classList.remove('text-green-600');
+                    clearButtons[key].classList.add('hidden');
+                });
+                
+                Object.keys(fileInputs).forEach(key => {
+                    const inputBox = uploadBoxes[key];
+                    const clearBtn = clearButtons[key];
+                    inputBox.onclick = (e) => { if (e.target !== clearBtn) fileInputs[key].click(); };
+                });
+
+                loadDataContainer.classList.remove('hidden');
+                buttons.downloadPrf.classList.remove('hidden');
+                chatContainer.innerHTML = '';
+                chatInputArea.classList.add('hidden');
+                buttons.startSynthesis.classList.remove('hidden');
+            }
+
+            // A new dedicated screen for demos
+            const demoSelectScreen = document.createElement('div');
+            demoSelectScreen.id = 'demo-select-screen';
+            demoSelectScreen.className = 'screen hidden text-center max-w-2xl mx-auto';
+            let demoButtonsHTML = `<div class="card p-8 md:p-12">
+                <h1 class="text-4xl font-bold mb-6">Select a Demo</h1>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
+            Object.keys(demoData).forEach(key => {
+                demoButtonsHTML += `<button data-demo="${key}" class="btn btn-secondary p-4 rounded-lg">${demoData[key].name}</button>`;
+            });
+            demoButtonsHTML += `</div><button id="back-to-start-from-demo-select" class="btn btn-link mt-8">← Back to Start</button></div>`;
+            demoSelectScreen.innerHTML = demoButtonsHTML;
+            document.getElementById('app').appendChild(demoSelectScreen);
+
+            const viewDemosBtn = document.getElementById('view-demos-btn');
+            
+            viewDemosBtn.addEventListener('click', () => {
+                screens.start.classList.add('hidden');
+                screens.explanation.classList.add('hidden');
+                screens.main.classList.add('hidden');
+                demoSelectScreen.classList.remove('hidden');
+            });
+            
+            document.getElementById('back-to-start-from-demo-select').addEventListener('click', () => {
+                demoSelectScreen.classList.add('hidden');
+                screens.start.classList.remove('hidden');
+            });
+            
+            demoSelectScreen.addEventListener('click', (e) => {
+                 if (e.target.dataset.demo) {
+                    demoSelectScreen.classList.add('hidden');
+                    screens.main.classList.remove('hidden');
+                    populateDemo(e.target.dataset.demo);
+                }
+            });
+
         });
     </script>
 </body>
