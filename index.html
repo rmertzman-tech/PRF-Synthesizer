@@ -249,7 +249,7 @@
                 <div class="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md my-6">
                     <h3 class="font-bold">How to Use This Tool:</h3>
                     <ul class="list-disc list-inside mt-2 space-y-1">
-                        <li>Use the <strong>"Load Data"</strong> dropdown for a quick way to import your saved work.</li>
+                        <li>Use the <strong>"Load My Saved Data"</strong> button for a quick way to import your work from the explorer apps.</li>
                         <li>Explore a <strong>pre-populated demo</strong> from the "View Demos" button on the start screen.</li>
                         <li>Alternatively, you can <strong>upload your .txt files</strong> from each explorer.</li>
                         <li>Use the <strong>expand icon</strong> in the corner of a review box for a larger "Focus Mode" view.</li>
@@ -267,12 +267,7 @@
         <div id="main-app" class="hidden">
             <div class="mb-4 flex justify-between items-center">
                 <button id="back-to-start-from-main-btn" class="btn btn-link">← Back to Start</button>
-                <div id="load-data-container" class="dropdown">
-                    <button class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load My Saved Data</button>
-                    <div id="load-data-dropdown" class="dropdown-content">
-                        <button id="load-my-data-btn">Load from Browser</button>
-                    </div>
-                </div>
+                <button id="load-my-data-btn" class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load My Saved Data</button>
             </div>
 
             <div class="text-center mb-8">
@@ -316,8 +311,7 @@
                         <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
                              <h3 class="font-semibold mb-2">API Key</h3>
                              <div class="flex flex-col sm:flex-row items-center gap-2">
-                                <input type="password" id="api-key-input" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm flex-grow" placeholder="Enter & Save Google AI API Key">
-                                <button id="save-key-btn" class="btn btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">Save Key</button>
+                                <input type="password" id="api-key-input" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm flex-grow" placeholder="Enter Google AI API Key here">
                             </div>
                             <p class="text-xs text-gray-500 mt-2">Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline">Google AI Studio</a>.</p>
                         </div>
@@ -354,13 +348,13 @@
             };
             const buttons = {
                 startHere: document.getElementById('start-here-btn'),
-                viewDemo: document.getElementById('view-demos-btn'), // This button exists now
+                viewDemo: document.getElementById('view-demos-btn'),
                 continueToApp: document.getElementById('continue-to-app-btn'),
                 backToStartFromMain: document.getElementById('back-to-start-from-main-btn'),
                 downloadPrf: document.getElementById('download-prf-btn'),
-                saveKey: document.getElementById('save-key-btn'),
                 startSynthesis: document.getElementById('start-synthesis-btn'),
                 sendChat: document.getElementById('send-chat-btn'),
+                loadMyData: document.getElementById('load-my-data-btn'),
             };
             
             const ALL_KEYS = ['beliefs', 'rules', 'ontology', 'authenticity', 'assembly_history', 'future_pull'];
@@ -383,16 +377,9 @@
             const chatSpinner = document.getElementById('chat-spinner');
             const mainHeader = document.getElementById('main-header');
             const mainSubheader = document.getElementById('main-subheader');
-            const loadDataDropdown = document.getElementById('load-data-dropdown');
-            const loadDataContainer = document.getElementById('load-data-container');
-
+            
             // --- Storage Keys ---
             const DATA_KEYS = { beliefs: 'prf_beliefs_data', rules: 'prf_rules_data', ontology: 'prf_ontology_data', authenticity: 'prf_authenticity_data', assembly_history: 'prf_assembly_history_data', future_pull: 'prf_future_pull_data' };
-            const API_KEY = 'prf_api_key';
-
-            // --- Initial Load ---
-            const savedApiKey = localStorage.getItem(API_KEY);
-            if (savedApiKey) apiKeyInput.value = savedApiKey;
 
             // --- Screen Navigation ---
             buttons.startHere.addEventListener('click', () => { 
@@ -425,17 +412,7 @@
             }
 
             // --- Load Data Logic ---
-            if (loadDataDropdown) {
-                loadDataDropdown.addEventListener('click', (e) => {
-                    if (e.target.id === 'load-my-data-btn') {
-                        loadMyData();
-                    } else if (e.target.dataset.demo) {
-                        populateDemo(e.target.dataset.demo);
-                    }
-                });
-            }
-
-            function loadMyData() {
+            buttons.loadMyData.addEventListener('click', () => {
                 let loadedCount = 0;
                 Object.keys(DATA_KEYS).forEach(key => {
                     const data = localStorage.getItem(DATA_KEYS[key]);
@@ -453,7 +430,7 @@
                 } else {
                     showMessage('No data found in browser storage. Please use the "Save to Synthesizer" button in the explorer apps first.');
                 }
-            }
+            });
 
             // --- File Handling Logic ---
             const handleFile = (file, key) => {
@@ -524,17 +501,6 @@
                 }
             });
 
-            // --- Save API Key Logic ---
-            buttons.saveKey.addEventListener('click', () => {
-                const apiKey = apiKeyInput.value.trim();
-                if (apiKey) {
-                    localStorage.setItem(API_KEY, apiKey);
-                    showMessage('API Key saved successfully.', 'success');
-                } else {
-                    showMessage('Please enter a valid API key.', 'error');
-                }
-            });
-
             // --- Guided Synthesis Chat Logic ---
             let chatHistory = [];
             let isDemoMode = false;
@@ -551,9 +517,9 @@
             async function startConversation(isDemo = false, demoData = null) {
                 isDemoMode = isDemo;
                 
-                const apiKey = localStorage.getItem(API_KEY);
+                const apiKey = apiKeyInput.value.trim();
                 if (!apiKey) {
-                    showMessage('Please save your API key before starting.', 'error');
+                    showMessage('Please enter your API key to begin.', 'error');
                     return;
                 }
                 
@@ -594,7 +560,11 @@
             }
 
             async function generateAiResponse(initialPrompt = null) {
-                const apiKey = localStorage.getItem(API_KEY);
+                const apiKey = apiKeyInput.value.trim();
+                if (!apiKey) {
+                     showMessage('Please enter your API key to continue the conversation.', 'error');
+                     return;
+                }
                 
                 sendBtnText.classList.add('hidden');
                 chatSpinner.classList.remove('hidden');
@@ -603,7 +573,9 @@
                 if (initialPrompt) {
                     chatHistory.push({ role: 'user', parts: [{ text: initialPrompt }] });
                 } else {
-                    chatHistory.push({ role: 'user', parts: [{ text: chatInput.value.trim() }] });
+                    // For follow-up messages, use the user's text from the input
+                    const userTextForHistory = chatHistory.length > 0 ? chatInput.value.trim() : document.querySelector('.user-message:last-child').textContent;
+                    chatHistory.push({ role: 'user', parts: [{ text: userTextForHistory }] });
                 }
 
                 try {
@@ -617,6 +589,9 @@
                     if (!response.ok) { throw new Error(`API request failed with status ${response.status}`); }
 
                     const result = await response.json();
+                    if (!result.candidates || result.candidates.length === 0) {
+                        throw new Error('No content returned from API. The response may have been blocked.');
+                    }
                     const aiText = result.candidates[0].content.parts[0].text;
                     
                     chatHistory.push({ role: 'model', parts: [{ text: aiText }] });
@@ -624,7 +599,7 @@
 
                 } catch (error) {
                     console.error('AI Chat Error:', error);
-                    addMessageToChat('model', 'An error occurred. Please check your API key and try again.');
+                    addMessageToChat('model', 'An error occurred. Please check your API key and try again. It may be invalid or have restrictions.');
                 } finally {
                     sendBtnText.classList.remove('hidden');
                     chatSpinner.classList.add('hidden');
@@ -826,4 +801,5 @@
         });
     </script>
 </body>
-</html>"
+</html>
+
