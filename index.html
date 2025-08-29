@@ -571,7 +571,7 @@
 
                     if (!result.candidates || result.candidates.length === 0) {
                         if (result.promptFeedback && result.promptFeedback.blockReason) {
-                            throw new Error(`Prompt blocked for safety reason: ${result.promptFeedback.blockReason}`);
+                            throw new Error(`The AI's response was blocked for the following reason: ${result.promptFeedback.blockReason}. This can happen with complex topics. Please try rephrasing your message.`);
                         } else {
                             throw new Error('No content returned from API. The response may have been blocked due to safety filters.');
                         }
@@ -583,13 +583,7 @@
 
                 } catch (error) {
                     console.error('AI Chat Error:', error);
-                    let errorMessage = 'An error occurred. Please check your API key and try again. It may be invalid or have restrictions.';
-                    if (error.message.toLowerCase().includes('blocked')) {
-                        errorMessage = 'The AI\'s response was blocked, likely due to safety filters. This can happen with complex topics. Please try rephrasing your last message or starting a new synthesis.';
-                    } else if (error.message.toLowerCase().includes('api key')) {
-                        errorMessage = 'API Key Error: The provided key is likely invalid or not configured correctly. Please double-check the key and try again.';
-                    }
-                    addMessageToChat('model', errorMessage);
+                    addMessageToChat('model', `An error occurred. Please see the technical details below:\n\n${error.message}`);
                 } finally {
                     sendBtnText.classList.remove('hidden');
                     chatSpinner.classList.add('hidden');
