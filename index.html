@@ -249,7 +249,8 @@
                 <div class="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-md my-6">
                     <h3 class="font-bold">How to Use This Tool:</h3>
                     <ul class="list-disc list-inside mt-2 space-y-1">
-                        <li>Use the <strong>"Load Data"</strong> dropdown for a quick way to import your saved work or to explore a pre-populated demo.</li>
+                        <li>Use the <strong>"Load Data"</strong> dropdown for a quick way to import your saved work.</li>
+                        <li>Explore a <strong>pre-populated demo</strong> from the "View Demos" button on the start screen.</li>
                         <li>Alternatively, you can <strong>upload your .txt files</strong> from each explorer.</li>
                         <li>Use the <strong>expand icon</strong> in the corner of a review box for a larger "Focus Mode" view.</li>
                         <li>Engage in a <strong>Guided Synthesis</strong> with the AI to connect your ideas step-by-step.</li>
@@ -267,18 +268,9 @@
             <div class="mb-4 flex justify-between items-center">
                 <button id="back-to-start-from-main-btn" class="btn btn-link">← Back to Start</button>
                 <div id="load-data-container" class="dropdown">
-                    <button class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load Data</button>
+                    <button class="btn btn-primary bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold">Load My Saved Data</button>
                     <div id="load-data-dropdown" class="dropdown-content">
-                        <button id="load-my-data-btn">Load My Saved Data</button>
-                        <hr>
-                        <button data-demo="mandela">Demo: Nelson Mandela</button>
-                        <button data-demo="carson">Demo: Rachel Carson</button>
-                        <button data-demo="dali">Demo: Salvador Dalí</button>
-                        <button data-demo="weiwei">Demo: Ai Weiwei</button>
-                        <button data-demo="day">Demo: Dorothy Day</button>
-                        <button data-demo="maathai">Demo: Wangari Maathai</button>
-                        <button data-demo="haugen">Demo: Frances Haugen</button>
-                        <button data-demo="boisjoly">Demo: Roger Boisjoly</button>
+                        <button id="load-my-data-btn">Load from Browser</button>
                     </div>
                 </div>
             </div>
@@ -433,13 +425,15 @@
             }
 
             // --- Load Data Logic ---
-            loadDataDropdown.addEventListener('click', (e) => {
-                if (e.target.id === 'load-my-data-btn') {
-                    loadMyData();
-                } else if (e.target.dataset.demo) {
-                    populateDemo(e.target.dataset.demo);
-                }
-            });
+            if (loadDataDropdown) {
+                loadDataDropdown.addEventListener('click', (e) => {
+                    if (e.target.id === 'load-my-data-btn') {
+                        loadMyData();
+                    } else if (e.target.dataset.demo) {
+                        populateDemo(e.target.dataset.demo);
+                    }
+                });
+            }
 
             function loadMyData() {
                 let loadedCount = 0;
@@ -613,7 +607,7 @@
                 }
 
                 try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -832,4 +826,4 @@
         });
     </script>
 </body>
-</html>
+</html>"
