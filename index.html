@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>PRF Synthesizer & Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -191,38 +191,6 @@
             align-self: flex-end;
             border-bottom-right-radius: 0;
         }
-        /* Dropdown Styles */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f1f1f1;
-            min-width: 220px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            right: 0;
-        }
-        .dropdown-content button {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            width: 100%;
-            text-align: left;
-            background: none;
-            border: none;
-        }
-        .dropdown-content button:hover {
-            background-color: #ddd;
-        }
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4 md:p-8">
@@ -262,6 +230,12 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Demo Select Screen -->
+        <div id="demo-select-screen" class="screen hidden text-center max-w-2xl mx-auto">
+            <!-- This will be populated by JS -->
+        </div>
+
 
         <!-- Main App Workspace -->
         <div id="main-app" class="hidden">
@@ -345,6 +319,7 @@
                 start: document.getElementById('start-screen'), 
                 explanation: document.getElementById('explanation-screen'), 
                 main: document.getElementById('main-app'),
+                demoSelect: document.getElementById('demo-select-screen'),
             };
             const buttons = {
                 startHere: document.getElementById('start-here-btn'),
@@ -459,7 +434,11 @@
                 const inputBox = uploadBoxes[key];
                 const fileInput = fileInputs[key];
                 const clearBtn = clearButtons[key];
-                inputBox.addEventListener('click', (e) => { if (e.target !== clearBtn) fileInput.click(); });
+                inputBox.addEventListener('click', (e) => { 
+                    if (e.target !== clearBtn) {
+                        fileInput.click(); 
+                    }
+                });
                 fileInput.addEventListener('change', (event) => handleFile(event.target.files[0], key));
                 inputBox.addEventListener('dragover', (event) => { event.preventDefault(); inputBox.classList.add('drag-over'); });
                 inputBox.addEventListener('dragleave', () => inputBox.classList.remove('drag-over'));
@@ -547,8 +526,8 @@
                 if (!userText) return;
 
                 addMessageToChat('user', userText);
-                chatInput.value = '';
                 await generateAiResponse();
+                chatInput.value = '';
             }
 
             function addMessageToChat(role, text) {
@@ -573,9 +552,7 @@
                 if (initialPrompt) {
                     chatHistory.push({ role: 'user', parts: [{ text: initialPrompt }] });
                 } else {
-                    // For follow-up messages, use the user's text from the input
-                    const userTextForHistory = chatHistory.length > 0 ? chatInput.value.trim() : document.querySelector('.user-message:last-child').textContent;
-                    chatHistory.push({ role: 'user', parts: [{ text: userTextForHistory }] });
+                    chatHistory.push({ role: 'user', parts: [{ text: chatInput.value.trim() }] });
                 }
 
                 try {
@@ -684,7 +661,7 @@
                     rules: "My primary rule is to think globally and act locally. Grand speeches about environmentalism mean nothing without concrete action. Our rule in the Green Belt Movement is simple: plant trees. A second rule is that sustainable development must be led by women. Women are the primary caretakers of the land in my country. When you empower them to restore their environment, you are creating a powerful force for social and political change.",
                     ontology: "The most real things are not the abstract lines on a map that define a country, but the watersheds, the forests, and the soil that sustain the people who live there. A nation is not its government; a nation is its land and its people. When the land is sick, the nation is sick. My work is based on this simple, ecological ontology. Political problems are often, at their root, ecological problems.",
                     authenticity: "Authenticity is about having the courage to connect your personal values to public action, even when it is dangerous. I was trained as a scientist, a biologist. I could have had a quiet and comfortable career in academia. But I saw the forests of my country being destroyed, and I saw how that destruction was hurting the women in rural areas. To be authentic, I had to leave the safety of the university and start a movement. I was told that a woman, especially an educated woman, should not be digging in the dirt. But for me, digging in the dirt was the most authentic act I could perform.",
-                    assembly_history: "My assembly history is a story of two worlds. I grew up in a small village in rural Kenya, deeply connected to the land and the traditions of my people. Then, through education, I traveled to America and became a scientist, earning my Ph.D. in biology. For a time, these two worlds felt separate. The Green Belt Movement was the integration of these two halves of my identity. It was the application of my modern scientific training to solve the traditional problems of my community. It was about using the power of my education to restore the wisdom of my ancestors.",
+                    assembly_history: "My assembly history is a story of two worlds. I grew up in a small village in rural Kenya, deeply connected to the land and the traditions of my people. Then, through education, I traveled to America and became a scientist, earning my Ph.d. in biology. For a time, these two worlds felt separate. The Green Belt Movement was the integration of these two halves of my identity. It was the application of my modern scientific training to solve the traditional problems of my community. It was about using the power of my education to restore the wisdom of my ancestors.",
                     future_pull: "My 'future pull' was a vision of a green and peaceful Africa. I saw a future where the hills of my country would be covered in trees again, where women would have control over their own resources, and where the government would be accountable to its people and its land. This vision is what kept me going through years of harassment, imprisonment, and political opposition. Every tree we planted was an act of faith in that future. We were not just planting trees; we were planting the seeds of a new democracy."
                 },
                 haugen: {
@@ -713,7 +690,7 @@
                 if (!data) {
                     console.error("Demo data not found for key:", key);
                     return;
-                };
+                }
 
                 resetToUserMode(); // Clear existing user data first
 
@@ -730,7 +707,8 @@
                     }
                 });
                 
-                loadDataContainer.classList.add('hidden');
+                // Hide user-specific controls in demo mode
+                buttons.loadMyData.classList.add('hidden');
                 buttons.downloadPrf.classList.add('hidden');
                 
                 startConversation(true, data);
@@ -749,23 +727,15 @@
                     clearButtons[key].classList.add('hidden');
                 });
                 
-                Object.keys(fileInputs).forEach(key => {
-                    const inputBox = uploadBoxes[key];
-                    const clearBtn = clearButtons[key];
-                    inputBox.onclick = (e) => { if (e.target !== clearBtn) fileInputs[key].click(); };
-                });
-
-                loadDataContainer.classList.remove('hidden');
+                buttons.loadMyData.classList.remove('hidden');
                 buttons.downloadPrf.classList.remove('hidden');
                 chatContainer.innerHTML = '';
                 chatInputArea.classList.add('hidden');
                 buttons.startSynthesis.classList.remove('hidden');
             }
-
-            // A new dedicated screen for demos
-            const demoSelectScreen = document.createElement('div');
-            demoSelectScreen.id = 'demo-select-screen';
-            demoSelectScreen.className = 'screen hidden text-center max-w-2xl mx-auto';
+            
+            // Build the demo select screen dynamically
+            const demoSelectScreen = screens.demoSelect;
             let demoButtonsHTML = `<div class="card p-8 md:p-12">
                 <h1 class="text-4xl font-bold mb-6">Select a Demo</h1>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
@@ -774,11 +744,8 @@
             });
             demoButtonsHTML += `</div><button id="back-to-start-from-demo-select" class="btn btn-link mt-8">← Back to Start</button></div>`;
             demoSelectScreen.innerHTML = demoButtonsHTML;
-            document.getElementById('app').appendChild(demoSelectScreen);
 
-            const viewDemosBtn = document.getElementById('view-demos-btn');
-            
-            viewDemosBtn.addEventListener('click', () => {
+            buttons.viewDemo.addEventListener('click', () => {
                 screens.start.classList.add('hidden');
                 screens.explanation.classList.add('hidden');
                 screens.main.classList.add('hidden');
