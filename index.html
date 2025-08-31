@@ -141,6 +141,7 @@
             padding: 0.75rem 1rem;
             border-radius: 1rem;
             margin-bottom: 0.5rem;
+            white-space: pre-wrap;
         }
         .user-message {
             background-color: #4f46e5;
@@ -270,6 +271,14 @@
                                 <button id="chat-send-btn" class="btn btn-primary px-6 py-2 rounded-lg font-semibold" disabled>Send</button>
                             </div>
                         </div>
+
+                        <div id="final-analysis-section" class="hidden mt-6">
+                             <button id="generate-analysis-btn" class="btn btn-primary w-full py-3 rounded-lg font-semibold flex items-center justify-center">
+                                <span id="analysis-btn-text">Generate Final AI Analysis</span>
+                                <div id="analysis-spinner" class="spinner hidden"></div>
+                            </button>
+                            <div id="final-analysis-display" class="hidden mt-4 w-full min-h-[100px] p-3 bg-gray-50 border rounded-lg whitespace-pre-wrap"></div>
+                        </div>
                         
                         <div class="mt-6 text-right">
                             <button id="download-prf-btn" class="btn btn-primary px-8 py-3 rounded-lg font-semibold">Download Full PRF</button>
@@ -295,6 +304,8 @@
             const continueToAppBtn = document.getElementById('continue-to-app-btn');
             const backToStartBtn = document.getElementById('back-to-start-btn');
             const loadDataBtn = document.getElementById('load-data-btn');
+            const generateAnalysisBtn = document.getElementById('generate-analysis-btn');
+
 
             // --- Main App Elements ---
             const reviewGrid = document.getElementById('review-grid');
@@ -302,6 +313,10 @@
             const apiKeyInput = document.getElementById('api-key-input');
             const saveKeyBtn = document.getElementById('save-key-btn');
             const keyStatus = document.getElementById('key-status');
+            const finalAnalysisSection = document.getElementById('final-analysis-section');
+            const finalAnalysisDisplay = document.getElementById('final-analysis-display');
+            const analysisBtnText = document.getElementById('analysis-btn-text');
+            const analysisSpinner = document.getElementById('analysis-spinner');
             
             // --- Chat Elements ---
             const chatHistory = document.getElementById('chat-history');
@@ -355,38 +370,27 @@
             // --- Dynamic Creation of Review Boxes ---
             CATEGORIES.forEach(key => {
                 const formattedName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-                // Create container
                 const container = document.createElement('div');
                 container.className = 'review-box-container';
                 container.dataset.key = key;
-
-                // Create textarea
                 const textarea = document.createElement('textarea');
                 textarea.id = `${key}-display`;
                 textarea.className = 'w-full h-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none';
-                textarea.placeholder = `${formattedName} data will appear here...`;
+                textarea.placeholder = `${formattedName} data...`;
                 container.appendChild(textarea);
-                
-                // Create expand/collapse button
                 const expandBtn = document.createElement('button');
                 expandBtn.className = 'expand-btn';
                 expandBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-fullscreen" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z"/></svg>`;
                 expandBtn.title = `Focus on ${formattedName}`;
                 container.appendChild(expandBtn);
-
                 reviewGrid.appendChild(container);
-
-                // Focus Mode Logic
                 expandBtn.addEventListener('click', () => {
                     const isFocused = container.classList.contains('is-focused');
                     reviewGrid.querySelectorAll('.review-box-container').forEach(c => c.classList.remove('is-focused'));
-                    
                     if (isFocused) {
                         reviewGrid.classList.remove('focused');
                         expandBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-fullscreen" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z"/></svg>`;
                         expandBtn.title = `Focus on ${formattedName}`;
-
                     } else {
                         reviewGrid.classList.add('focused');
                         container.classList.add('is-focused');
@@ -394,37 +398,28 @@
                         expandBtn.title = `Return to Grid View`;
                     }
                 });
-
                 textarea.addEventListener('input', hideDemoBanner);
             });
 
-            // --- Dynamic Creation of Upload Boxes and File Handling ---
+            // --- File Handling Logic ---
             CATEGORIES.forEach(key => {
                 const uploadBox = document.getElementById(`${key}-upload-box`);
                 const fileInput = document.getElementById(`${key}-file-input`);
                 const clearBtn = document.getElementById(`${key}-clear-btn`);
                 const display = document.getElementById(`${key}-display`);
-
                 const handleFile = (file) => {
                     hideDemoBanner();
                     if (file && file.type === 'text/plain') {
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             const newContent = e.target.result;
-                            if (display.value.trim().length > 0) {
-                                display.value += `\n\n----------\n(New File: ${file.name})\n----------\n\n` + newContent;
-                            } else {
-                                display.value = newContent;
-                            }
+                            display.value = display.value.trim().length > 0 ? `${display.value}\n\n----------\n(New File: ${file.name})\n----------\n\n${newContent}` : newContent;
                             uploadBox.classList.add('filled');
                             clearBtn.classList.remove('hidden');
                         };
                         reader.readAsText(file);
-                    } else {
-                        alert('Please upload a valid .txt file.');
-                    }
+                    } else { alert('Please upload a valid .txt file.'); }
                 };
-
                 uploadBox.addEventListener('click', (e) => { if (e.target !== clearBtn) fileInput.click(); });
                 fileInput.addEventListener('change', (event) => handleFile(event.target.files[0], key));
                 uploadBox.addEventListener('dragover', (event) => { event.preventDefault(); uploadBox.classList.add('drag-over'); });
@@ -443,15 +438,11 @@
             loadDataBtn.addEventListener('click', () => {
                 let loadedCount = 0;
                 const demoName = localStorage.getItem(DEMO_NAME_KEY);
-
                 if (demoName) {
                     demoNameDisplay.textContent = demoName;
                     demoStatusBanner.classList.remove('hidden');
-                    localStorage.removeItem(DEMO_NAME_KEY); // One-time use
-                } else {
-                    hideDemoBanner();
-                }
-
+                    localStorage.removeItem(DEMO_NAME_KEY);
+                } else { hideDemoBanner(); }
                 CATEGORIES.forEach(key => {
                     const savedData = localStorage.getItem(DATA_KEYS[key]);
                     if (savedData) {
@@ -462,127 +453,103 @@
                         loadedCount++;
                     }
                 });
-
-                if (loadedCount > 0) {
-                    alert(`${loadedCount} data source(s) loaded successfully from your browser.`);
-                } else {
-                    alert('No saved data found from the explorer apps in this browser.');
-                }
+                if (loadedCount > 0) { alert(`${loadedCount} data source(s) loaded successfully.`); } 
+                else { alert('No saved data found from the explorer apps in this browser.'); }
             });
-
 
             // --- Guided Synthesis (Chat) Logic ---
             let conversationHistory = [];
-            let currentStep = -1;
-
-            const synthesisSteps = [
-                {
-                    type: 'start',
-                    prompt: "Let's begin the guided synthesis of your Personal Reality Framework. I'll walk you through connecting your ideas. When you're ready, click 'Send' to start with your Beliefs."
-                },
-                {
-                    type: 'module',
-                    key: 'beliefs',
-                    prompt: "First, let's look at your **Beliefs**. I've reviewed what you wrote. In your own words, what is the single most important belief that acts as a foundation for your framework?"
-                },
-                {
-                    type: 'module',
-                    key: 'rules',
-                    prompt: "That's a clear foundation. Now let's bring in your **Rules**. How does one of your key rules connect to or stem from the core belief you just described?"
-                },
-                {
-                    type: 'module',
-                    key: 'ontology',
-                    prompt: "Interesting connection. Next is your **Ontology**—your view of what is 'real'. How does your understanding of reality support the beliefs and rules we've discussed?"
-                },
-                {
-                    type: 'module',
-                    key: 'authenticity',
-                    prompt: "That adds another layer. Let's consider **Authenticity**. How does living by these beliefs and rules help you feel authentic and true to yourself?"
-                },
-                {
-                    type: 'module',
-                    key: 'assembly_history',
-                    prompt: "Great. Now let's connect this to your past. Looking at your **Assembly History**, can you identify a key event or experience that helped form these core parts of your framework?"
-                },
-                {
-                    type: 'module',
-                    key: 'future_pull',
-                    prompt: "That provides important context. Finally, let's look to the future. How does your **Future Pull**—the person you are trying to become—guide or give purpose to the framework we have been building?"
-                },
-                 {
-                    type: 'end',
-                    prompt: "We have now connected all six parts of your framework. You've done excellent work. Based on our conversation, please write a final, one-paragraph synthesis in the box below that ties everything together. This conversation will be included when you download your PRF."
-                }
-            ];
+            let currentStep = 0;
+            const synthesisSteps = [ 'start', 'beliefs', 'rules', 'ontology', 'authenticity', 'assembly_history', 'future_pull', 'end' ];
 
             function addMessage(text, sender) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `chat-message ${sender}-message`;
                 messageDiv.textContent = text;
                 chatHistory.appendChild(messageDiv);
-                chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll
-                conversationHistory.push({ role: sender, parts: [{ text }] });
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+
+            function constructPrompt(step) {
+                const currentModule = synthesisSteps[step];
+                const previousModule = synthesisSteps[step - 1];
+                let allData = '';
+                CATEGORIES.forEach(key => {
+                    const formattedName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    allData += `--- ${formattedName} ---\n${document.getElementById(`${key}-display`).value || 'No data provided.'}\n\n`;
+                });
+
+                if (step === 1) { // First step after introduction
+                    return `You are an insightful and supportive philosophy tutor. Your goal is to help a student synthesize their Personal Reality Framework (PRF) through a step-by-step conversation.
+                    
+                    **Your Task:** Begin the conversation by asking an insightful, open-ended question about their **Beliefs**. Your question should encourage them to identify the core of their belief system.
+                    
+                    Here is all of the student's data for your reference:\n${allData}`;
+                } else {
+                     return `You are an insightful and supportive philosophy tutor continuing a guided synthesis conversation with a student about their Personal Reality Framework (PRF).
+                    
+                    **Conversation History So Far:**
+                    ${conversationHistory.map(msg => `[${msg.role === 'user' ? 'Student' : 'Tutor'}]: ${msg.parts[0].text}`).join('\n')}
+                    
+                    **Your Task:** Your next step is to guide the student to connect their reflections on **${previousModule.replace(/_/g, ' ')}** with their reflections on **${currentModule.replace(/_/g, ' ')}**.
+                    
+                    Please generate a response that does the following:
+                    1.  **Acknowledge and Validate:** Briefly and positively acknowledge the student's previous response.
+                    2.  **Synthesize and Connect:** Analyze the student's full data, find an interesting connection or a potential tension between the '${previousModule}' and '${currentModule}' sections.
+                    3.  **Ask a Probing Question:** Formulate an insightful, open-ended question that encourages the student to explore this connection or tension. Your question should prompt critical thinking, not a simple yes/no answer.
+                    
+                    Keep your tone encouraging and conversational.
+                    
+                    Here is all of the student's data for your reference:\n${allData}`;
+                }
             }
 
             async function getAiResponse() {
                 const apiKey = apiKeyInput.value.trim();
                 if (!apiKey) {
-                    addMessage("I can't proceed without a valid Google AI API key. Please enter it above.", 'ai');
+                    addMessage("Please enter your Google AI API key to begin the guided synthesis.", 'ai');
+                    chatHistory.querySelector('button')?.remove(); // remove start button
                     return;
                 }
                 
                 chatInput.disabled = true;
                 chatSendBtn.disabled = true;
-                addMessage("Thinking...", 'ai-thinking'); // Placeholder for spinner
+                const thinkingMsg = document.createElement('div');
+                thinkingMsg.className = 'chat-message ai-message';
+                thinkingMsg.innerHTML = '<div class="spinner"></div>';
+                chatHistory.appendChild(thinkingMsg);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
 
-                const prompt = `You are a helpful philosophy tutor. You are having a conversation with a student to help them synthesize their Personal Reality Framework. Their previous response in the conversation is: "${conversationHistory[conversationHistory.length-1].parts[0].text}". Your next step in the conversation is to say: "${synthesisSteps[currentStep].prompt}". Please respond to the student by first briefly and supportively acknowledging their last response, and then asking the next question as instructed. Keep your response conversational and encouraging.`;
+                const prompt = constructPrompt(currentStep);
+                const fullConversation = [...conversationHistory, {role: 'user', parts: [{text: prompt}]}];
+
 
                 try {
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: conversationHistory, generationConfig: { "stopSequences": ["User:"] } })
+                        body: JSON.stringify({ contents: fullConversation })
                     });
                     if (!response.ok) throw new Error(`API Error: ${response.status}`);
                     const result = await response.json();
                     const aiText = result.candidates[0].content.parts[0].text;
                     
-                    document.querySelector('.ai-thinking-message')?.remove(); // Remove thinking message
+                    thinkingMsg.remove();
                     addMessage(aiText, 'ai');
+                    conversationHistory.push({role: 'model', parts: [{text: aiText}]});
 
                 } catch (error) {
-                     document.querySelector('.ai-thinking-message')?.remove(); // Remove thinking message
+                     thinkingMsg.remove();
                      addMessage(`An error occurred: ${error.message}. Please check your API key and network connection.`, 'ai');
                 } finally {
-                    if (currentStep < synthesisSteps.length) {
+                    if (currentStep < synthesisSteps.length -1) {
                         chatInput.disabled = false;
                         chatSendBtn.disabled = false;
                         chatInput.focus();
-                    }
-                }
-            }
-
-            function startNextStep() {
-                currentStep++;
-                if (currentStep < synthesisSteps.length) {
-                    const step = synthesisSteps[currentStep];
-                    if(step.type === 'start' || step.type === 'end') {
-                         addMessage(step.prompt, 'ai');
-                         if(step.type === 'end') {
-                             chatInput.disabled = true;
-                             chatSendBtn.disabled = true;
-                             chatInput.placeholder = "Write your final synthesis in the box below.";
-                         }
                     } else {
-                        // For module steps, we need user input first. Let's make the prompt part of the AI's response.
-                        // The logic for this is now handled within the getAiResponse function.
-                        // For the very first module, we need to kick it off.
-                        if (currentStep === 1) { // This is the first module step.
-                            let initialPrompt = "You are a helpful philosophy tutor starting a guided synthesis. Your first task is to ask the student about their Beliefs. Please say: '" + step.prompt + "'";
-                             addMessage(step.prompt, 'ai');
-                        }
+                        // Conversation ended
+                        finalAnalysisSection.classList.remove('hidden');
                     }
                 }
             }
@@ -592,92 +559,100 @@
                 if (!userText) return;
                 
                 addMessage(userText, 'user');
+                conversationHistory.push({role: 'user', parts: [{text: userText}]});
                 chatInput.value = '';
-
-                if (currentStep === 0) { // After user clicks send on the intro message
-                    startNextStep();
-                    return;
-                }
-
-                if (currentStep < synthesisSteps.length -1) {
-                    const nextStep = synthesisSteps[currentStep + 1];
-                    let allData = `Here is all the student's data for context:\n\n`;
-                    CATEGORIES.forEach(key => {
-                        const formattedName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        allData += `--- ${formattedName} ---\n${document.getElementById(`${key}-display`).value || 'No data provided.'}\n\n`;
-                    });
-
-                    let promptForAi = `You are a helpful and conversational philosophy tutor. You are guiding a student through synthesizing their Personal Reality Framework. We are on step ${currentStep + 1} of ${synthesisSteps.length - 1}.
-                    
-                    The student has just responded to your previous question. Their response was: "${userText}"
-                    
-                    Your next task is to ask them about **${nextStep.key.replace(/_/g, ' ')}**. Your prompt for this is: "${nextStep.prompt}"
-                    
-                    Please generate a response that does two things:
-                    1. Briefly and supportively acknowledge their previous answer ("${userText}").
-                    2. Seamlessly transition into asking the next question as instructed.
-                    
-                    Keep your tone encouraging. Here is the student's full data for your reference:\n${allData}`;
-
-                    conversationHistory.push({ role: 'user', parts: [{text: userText}]});
-                    // This is a simplified approach. A more robust implementation would call the AI here.
-                    // For now, we'll just present the next question.
-                    currentStep++;
-                    addMessage(synthesisSteps[currentStep].prompt, 'ai');
-                     if(synthesisSteps[currentStep].type === 'end') {
-                        chatInput.disabled = true;
-                        chatSendBtn.disabled = true;
-                        chatInput.placeholder = "Write your final synthesis in the box below.";
-                    }
-
-                } else {
-                     // End of conversation
-                }
+                currentStep++;
+                getAiResponse();
             });
 
-
             function initializeChat() {
-                // Clear existing history
                 chatHistory.innerHTML = '';
                 conversationHistory = [];
-                currentStep = -1;
+                currentStep = 0;
+                finalAnalysisSection.classList.add('hidden');
+                finalAnalysisDisplay.classList.add('hidden');
 
-                // Check if any data is loaded
+
                 const hasData = CATEGORIES.some(key => document.getElementById(`${key}-display`).value.trim() !== '');
-
                 if (hasData) {
-                    startNextStep(); // Start with the intro message
-                    chatInput.disabled = false;
-                    chatSendBtn.disabled = false;
-                    chatInput.placeholder = "Type your response here...";
+                    currentStep = 1; // Ready for first AI question
+                    getAiResponse();
                 } else {
-                    addMessage("Please load or upload some data from your explorers before we can begin the guided synthesis.", 'ai');
-                    chatInput.disabled = true;
-                    chatSendBtn.disabled = true;
-                    chatInput.placeholder = "Load data to begin...";
+                    addMessage("Please load or upload some data from your explorers before we can begin.", 'ai');
                 }
             }
 
-            // A button to start/restart the chat, maybe? For now, it starts when data is loaded.
-            // Let's change this to an explicit button.
-            chatHistory.innerHTML = '';
             const startChatBtn = document.createElement('button');
             startChatBtn.textContent = 'Begin Guided Synthesis';
             startChatBtn.className = 'btn btn-primary mx-auto';
             chatHistory.appendChild(startChatBtn);
-            
             startChatBtn.addEventListener('click', () => {
                 initializeChat();
             });
 
+            generateAnalysisBtn.addEventListener('click', async () => {
+                const apiKey = apiKeyInput.value.trim();
+                if (!apiKey) {
+                    alert('Please enter your API key to generate the final analysis.');
+                    return;
+                }
+                analysisBtnText.classList.add('hidden');
+                analysisSpinner.classList.remove('hidden');
+                generateAnalysisBtn.disabled = true;
+
+                let allData = '';
+                CATEGORIES.forEach(key => {
+                    const formattedName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    allData += `--- ${formattedName} ---\n${document.getElementById(`${key}-display`).value || 'No data provided.'}\n\n`;
+                });
+
+                const finalPrompt = `You are a philosophy tutor who has just completed a guided synthesis conversation with a student. Your task is to write a final, comprehensive analysis of their Personal Reality Framework, formatted exactly like the high-quality examples you have been trained on.
+                
+                **Instructions:**
+                1.  Review the student's complete raw data and the full transcript of your conversation.
+                2.  Write a brief, encouraging introductory sentence.
+                3.  Generate the analysis in three distinct, bolded sections: **Key Themes**, **Potential Tensions**, and **A Question for Deeper Synthesis**.
+                4.  Under **Key Themes**, identify and describe 2-3 of the most important recurring ideas that connect the different parts of their framework.
+                5.  Under **Potential Tensions**, identify 1-2 areas where their stated beliefs, rules, or goals might conflict or be in tension with each other, and frame them as thoughtful questions.
+                6.  Under **A Question for Deeper Synthesis**, formulate one final, powerful, open-ended question that will challenge the student to think about their framework in a new way.
+                
+                **Student's Raw Data:**
+                ${allData}
+                
+                **Conversation Transcript:**
+                ${conversationHistory.map(msg => `[${msg.role === 'user' ? 'Student' : 'Tutor'}]: ${msg.parts[0].text}`).join('\n')}
+                `;
+
+                 try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
+                    });
+                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                    const result = await response.json();
+                    const aiText = result.candidates[0].content.parts[0].text;
+                    
+                    finalAnalysisDisplay.textContent = aiText;
+                    finalAnalysisDisplay.classList.remove('hidden');
+
+                } catch (error) {
+                     finalAnalysisDisplay.textContent = `An error occurred: ${error.message}. Please check your API key and network connection.`;
+                     finalAnalysisDisplay.classList.remove('hidden');
+                } finally {
+                    analysisBtnText.classList.remove('hidden');
+                    analysisSpinner.classList.add('hidden');
+                    generateAnalysisBtn.disabled = false;
+                }
+            });
 
             // --- Download Full PRF ---
             downloadPrfBtn.addEventListener('click', () => {
                 let fullPrfText = "My Personal Reality Framework\n============================\n\n";
                 CATEGORIES.forEach(key => {
                     const formattedName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    const display = document.getElementById(`${key}-display`);
-                    fullPrfText += `--- ${formattedName} ---\n` + (display.value || "No data uploaded.") + "\n\n";
+                    fullPrfText += `--- ${formattedName} ---\n` + (document.getElementById(`${key}-display`).value || "No data uploaded.") + "\n\n";
                 });
                 
                 if (conversationHistory.length > 0) {
@@ -689,11 +664,9 @@
                      fullPrfText += "\n\n";
                 }
                 
-                const finalSynthesis = document.getElementById('synthesis-input'); // Assuming you add a final synthesis box
-                if(finalSynthesis && finalSynthesis.value) {
-                    fullPrfText += "============================\n--- MY FINAL SYNTHESIS ---\n" + finalSynthesis.value + "\n\n";
+                if (!finalAnalysisDisplay.classList.contains('hidden')) {
+                    fullPrfText += "============================\n--- FINAL AI ANALYSIS ---\n" + (finalAnalysisDisplay.textContent || "No analysis generated.") + "\n\n";
                 }
-
 
                 const blob = new Blob([fullPrfText], { type: 'text/plain;charset=utf-8' });
                 const link = document.createElement('a');
@@ -707,3 +680,4 @@
     </script>
 </body>
 </html>
+
