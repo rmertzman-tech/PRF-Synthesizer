@@ -213,8 +213,13 @@
             </div>
             <!-- Header -->
             <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
+                <h1 id="main-title" class="text-4xl font-bold">Personal Reality Framework (PRF) Synthesizer</h1>
                 <p class="text-gray-600 mt-2">Import your saved summaries from the explorers to begin.</p>
+            </div>
+
+            <!-- Demo Status Banner -->
+            <div id="demo-status-banner" class="hidden card bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 text-center mb-6">
+                <p>You are currently viewing the interactive demo for: <strong id="demo-name-display"></strong>. Any edits or new file uploads will clear this demo.</p>
             </div>
 
             <!-- Main Workspace -->
@@ -281,6 +286,9 @@
             const startScreen = document.getElementById('start-screen');
             const explanationScreen = document.getElementById('explanation-screen');
             const mainApp = document.getElementById('main-app');
+            const mainTitle = document.getElementById('main-title');
+            const demoStatusBanner = document.getElementById('demo-status-banner');
+            const demoNameDisplay = document.getElementById('demo-name-display');
             
             // --- Button Elements ---
             const startHereBtn = document.getElementById('start-here-btn');
@@ -310,6 +318,7 @@
             };
 
             const CATEGORIES = Object.keys(DATA_KEYS);
+            const DEMO_NAME_KEY = 'prf_current_demo_name';
 
             // --- Screen Navigation ---
             startHereBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); explanationScreen.classList.remove('hidden'); });
@@ -339,6 +348,9 @@
             }
             loadApiKey();
 
+            function hideDemoBanner() {
+                demoStatusBanner.classList.add('hidden');
+            }
 
             // --- Dynamic Creation of Review Boxes ---
             CATEGORIES.forEach(key => {
@@ -368,7 +380,6 @@
                 // Focus Mode Logic
                 expandBtn.addEventListener('click', () => {
                     const isFocused = container.classList.contains('is-focused');
-                    // Remove focus from all containers first
                     reviewGrid.querySelectorAll('.review-box-container').forEach(c => c.classList.remove('is-focused'));
                     
                     if (isFocused) {
@@ -383,6 +394,8 @@
                         expandBtn.title = `Return to Grid View`;
                     }
                 });
+
+                textarea.addEventListener('input', hideDemoBanner);
             });
 
             // --- Dynamic Creation of Upload Boxes and File Handling ---
@@ -393,6 +406,7 @@
                 const display = document.getElementById(`${key}-display`);
 
                 const handleFile = (file) => {
+                    hideDemoBanner();
                     if (file && file.type === 'text/plain') {
                         const reader = new FileReader();
                         reader.onload = (e) => {
@@ -417,6 +431,7 @@
                 uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('drag-over'));
                 uploadBox.addEventListener('drop', (event) => { event.preventDefault(); uploadBox.classList.remove('drag-over'); handleFile(event.dataTransfer.files[0], key); });
                 clearBtn.addEventListener('click', () => {
+                    hideDemoBanner();
                     display.value = '';
                     uploadBox.classList.remove('filled');
                     clearBtn.classList.add('hidden');
@@ -427,6 +442,16 @@
             // --- Load Data from LocalStorage ---
             loadDataBtn.addEventListener('click', () => {
                 let loadedCount = 0;
+                const demoName = localStorage.getItem(DEMO_NAME_KEY);
+
+                if (demoName) {
+                    demoNameDisplay.textContent = demoName;
+                    demoStatusBanner.classList.remove('hidden');
+                    localStorage.removeItem(DEMO_NAME_KEY); // One-time use
+                } else {
+                    hideDemoBanner();
+                }
+
                 CATEGORIES.forEach(key => {
                     const savedData = localStorage.getItem(DATA_KEYS[key]);
                     if (savedData) {
@@ -437,6 +462,7 @@
                         loadedCount++;
                     }
                 });
+
                 if (loadedCount > 0) {
                     alert(`${loadedCount} data source(s) loaded successfully from your browser.`);
                 } else {
