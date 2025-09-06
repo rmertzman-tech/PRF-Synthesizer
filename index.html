@@ -469,8 +469,8 @@
                 chatHistory.appendChild(messageDiv);
                 chatHistory.scrollTop = chatHistory.scrollHeight;
             }
-
-            function constructPrompt(step) {
+            
+            function constructPrompt(step, fullHistory) {
                 const currentModule = synthesisSteps[step];
                 const previousModule = synthesisSteps[step - 1];
                 let allData = '';
@@ -480,16 +480,16 @@
                 });
 
                 if (step === 1) { // First step after introduction
-                    return `You are an insightful and supportive philosophy tutor. Your goal is to help a student synthesize their Personal Reality Framework (PRF) through a step-by-step conversation.
+                    return `You are an insightful and supportive philosophy tutor specializing in a framework that analyzes personal reality through Beliefs, Rules, Ontology, Authenticity, Assembly History, and Future Pull. Your goal is to help a student synthesize these components through a step-by-step conversation.
                     
-                    **Your Task:** Begin the conversation by asking an insightful, open-ended question about their **Beliefs**. Your question should encourage them to identify the core of their belief system.
+                    **Your Task:** Begin the conversation by asking an insightful, open-ended question about their **Beliefs**. Your question should encourage them to identify the core of their belief system based on the text they provided.
                     
                     Here is all of the student's data for your reference:\n${allData}`;
                 } else {
                      return `You are an insightful and supportive philosophy tutor continuing a guided synthesis conversation with a student about their Personal Reality Framework (PRF).
                     
                     **Conversation History So Far:**
-                    ${conversationHistory.map(msg => `[${msg.role === 'user' ? 'Student' : 'Tutor'}]: ${msg.parts[0].text}`).join('\n')}
+                    ${fullHistory}
                     
                     **Your Task:** Your next step is to guide the student to connect their reflections on **${previousModule.replace(/_/g, ' ')}** with their reflections on **${currentModule.replace(/_/g, ' ')}**.
                     
@@ -503,7 +503,7 @@
                     Here is all of the student's data for your reference:\n${allData}`;
                 }
             }
-
+            
             async function getAiResponse() {
                 const apiKey = apiKeyInput.value.trim();
                 if (!apiKey) {
@@ -520,19 +520,22 @@
                 chatHistory.appendChild(thinkingMsg);
                 chatHistory.scrollTop = chatHistory.scrollHeight;
 
-                const prompt = constructPrompt(currentStep);
-                const fullConversation = [...conversationHistory, {role: 'user', parts: [{text: prompt}]}];
-
-
+                const fullHistoryText = conversationHistory.map(msg => `[${msg.role === 'user' ? 'Student' : 'Tutor'}]: ${msg.parts[0].text}`).join('\n');
+                const prompt = constructPrompt(currentStep, fullHistoryText);
+                const apiConversationHistory = [...conversationHistory, {role: 'user', parts: [{text: "HERE ARE MY INSTRUCTIONS FOR YOU, THE TUTOR: " + prompt}]}];
+                
                 try {
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: fullConversation })
+                        body: JSON.stringify({ contents: apiConversationHistory })
                     });
                     if (!response.ok) throw new Error(`API Error: ${response.status}`);
                     const result = await response.json();
+                    if (!result.candidates || result.candidates.length === 0) {
+                         throw new Error("No response from AI. The content may have been blocked.");
+                    }
                     const aiText = result.candidates[0].content.parts[0].text;
                     
                     thinkingMsg.remove();
@@ -550,6 +553,7 @@
                     } else {
                         // Conversation ended
                         finalAnalysisSection.classList.remove('hidden');
+                        addMessage("You have now completed the guided synthesis. You can now generate a final AI analysis of your entire framework.", 'ai');
                     }
                 }
             }
@@ -571,6 +575,7 @@
                 currentStep = 0;
                 finalAnalysisSection.classList.add('hidden');
                 finalAnalysisDisplay.classList.add('hidden');
+                finalAnalysisDisplay.textContent = '';
 
 
                 const hasData = CATEGORIES.some(key => document.getElementById(`${key}-display`).value.trim() !== '');
@@ -605,22 +610,30 @@
                     const formattedName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     allData += `--- ${formattedName} ---\n${document.getElementById(`${key}-display`).value || 'No data provided.'}\n\n`;
                 });
-
-                const finalPrompt = `You are a philosophy tutor who has just completed a guided synthesis conversation with a student. Your task is to write a final, comprehensive analysis of their Personal Reality Framework, formatted exactly like the high-quality examples you have been trained on.
                 
-                **Instructions:**
-                1.  Review the student's complete raw data and the full transcript of your conversation.
-                2.  Write a brief, encouraging introductory sentence.
-                3.  Generate the analysis in three distinct, bolded sections: **Key Themes**, **Potential Tensions**, and **A Question for Deeper Synthesis**.
-                4.  Under **Key Themes**, identify and describe 2-3 of the most important recurring ideas that connect the different parts of their framework.
-                5.  Under **Potential Tensions**, identify 1-2 areas where their stated beliefs, rules, or goals might conflict or be in tension with each other, and frame them as thoughtful questions.
-                6.  Under **A Question for Deeper Synthesis**, formulate one final, powerful, open-ended question that will challenge the student to think about their framework in a new way.
+                const fullHistoryText = conversationHistory.map(msg => `[${msg.role === 'user' ? 'Student' : 'Tutor'}]: ${msg.parts[0].text}`).join('\n');
+
+
+                const finalPrompt = `You are a philosophy tutor specializing in a framework that analyzes personal reality through Beliefs, Rules, Ontology, Authenticity, Assembly History, and Future Pull. You have just completed a guided synthesis conversation with a student.
+                
+                **Your Task:**
+                Write a final, comprehensive analysis of the student's Personal Reality Framework. Your analysis MUST be formatted in four distinct sections, with the titles in bold:
+                
+                1.  **Key Themes:** Identify and describe 2-3 of the most important recurring ideas that connect the different parts of their framework.
+                2.  **Potential Tensions:** Identify 1-2 areas where their stated beliefs, rules, or goals might conflict or be in tension with each other, and frame them as thoughtful questions.
+                3.  **A Question for Deeper Synthesis:** Formulate one final, powerful, open-ended question that will challenge the student to think about their framework in a new way.
+                4.  **Voice and Platform Analysis:** Based on the theoretical framework provided below, analyze the student's "Voice Architecture" and their approach to "Platform Innovation."
+                
+                **Theoretical Framework for Voice and Platform Analysis:**
+                - **Voice:** The capacity to articulate one's Personal Reality Framework. Different "Voice Architectures" exist (e.g., individualistic, collective, scientific, spiritual, artistic).
+                - **Platform:** The institutional and social structures that provide opportunities for a voice to be heard. "Platform Innovation" or "Platform Creation" is when a person builds new structures to amplify voices, rather than just using existing ones.
+                - **Capability Development:** Analyze how the person's actions or framework helps develop the capabilities of themselves or others.
                 
                 **Student's Raw Data:**
                 ${allData}
                 
                 **Conversation Transcript:**
-                ${conversationHistory.map(msg => `[${msg.role === 'user' ? 'Student' : 'Tutor'}]: ${msg.parts[0].text}`).join('\n')}
+                ${fullHistoryText}
                 `;
 
                  try {
@@ -632,6 +645,9 @@
                     });
                     if (!response.ok) throw new Error(`API Error: ${response.status}`);
                     const result = await response.json();
+                     if (!result.candidates || result.candidates.length === 0) {
+                         throw new Error("No response from AI. The content may have been blocked.");
+                    }
                     const aiText = result.candidates[0].content.parts[0].text;
                     
                     finalAnalysisDisplay.textContent = aiText;
@@ -657,7 +673,9 @@
                 
                 if (conversationHistory.length > 0) {
                     fullPrfText += "============================\n--- GUIDED SYNTHESIS CONVERSATION ---\n";
-                    conversationHistory.forEach(msg => {
+                    // Use the clean, stored conversation history
+                    const cleanHistory = conversationHistory.filter(msg => msg.role === 'user' || msg.role === 'model');
+                    cleanHistory.forEach(msg => {
                         const sender = msg.role === 'user' ? 'Me' : 'AI Tutor';
                         fullPrfText += `\n[${sender}]:\n${msg.parts[0].text}\n`;
                     });
